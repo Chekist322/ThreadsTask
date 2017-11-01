@@ -12,11 +12,9 @@ class SingleImage {
 
     private String mName;
     private String mPath;
-    private Bitmap mThumbnail;
 
     SingleImage() {
         mName = "empty";
-        mThumbnail = null;
     }
 
     String getName() {
@@ -27,21 +25,21 @@ class SingleImage {
         mName = aName;
     }
 
-    void buildThumbnail() {
+    Bitmap buildThumbnail() {
         BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
         bitmapOptions.inScaled = true;
         bitmapOptions.inSampleSize = 4;
         bitmapOptions.inDensity = 960;
         bitmapOptions.inTargetDensity = 400;
-        mThumbnail = BitmapFactory.decodeFile(mPath, bitmapOptions);
-    }
-
-    Bitmap getThumbnail() {
-        return mThumbnail;
+        return BitmapFactory.decodeFile(mPath, bitmapOptions);
     }
 
     void setPath(String aPath) {
         mPath = aPath;
+    }
+
+    public String getPath() {
+        return mPath;
     }
 
     Bitmap loadImageFromPath() {

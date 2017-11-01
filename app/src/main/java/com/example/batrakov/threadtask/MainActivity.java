@@ -1,17 +1,16 @@
 package com.example.batrakov.threadtask;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Messenger;
-import android.os.RemoteException;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SimpleItemAnimator;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,40 +18,43 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.io.File;
+import java.io.Serializable;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
-    public static ArrayList<SingleImage> sImageArrayList;
 
-    private static ListAdapter sAdapter;
+    public static final String IMAGE_PATH = "image path";
 
-    private static Messenger sMessenger = new Messenger(new HandlerForImageLoader());
-
-    public static final String OPEN_IMAGE = "open image";
-
-    public static final int IMAGE_LOADED = 0;
-
-    private ExecutorService mExecutorService;
-
-//    private ImageThreadsExecutor sExecutor = new ImageThreadsExecutor();
+    private LoaderThread mLoaderThread;
+    ArrayList<SingleImage> mImageArrayList;
+    ListAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mExecutorService = Executors.newFixedThreadPool(4);
         setContentView(R.layout.activity_main);
 
-        sImageArrayList = new ArrayList<>(50);
+        Handler responseHandler = new Handler();
+
+        mLoaderThread = new LoaderThread("LoaderThread", responseHandler);
+        mLoaderThread.setThumbnailDownloadListener(new LoaderThread.ThumbnailDownloadListener() {
+            @Override
+            public void onThumbnailDownloaded(ListHolder target, Bitmap thumbnail) {
+                target.setThumbnail(thumbnail);
+            }
+        });
+        mLoaderThread.start();
+
+        mImageArrayList = new ArrayList<>(50);
 
         RecyclerView recyclerView = findViewById(R.id.list);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        sAdapter = new ListAdapter(sImageArrayList);
-        recyclerView.setAdapter(sAdapter);
+        mAdapter = new ListAdapter(mImageArrayList);
+        recyclerView.setAdapter(mAdapter);
         ((SimpleItemAnimator) recyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
 
 
@@ -62,59 +64,23 @@ public class MainActivity extends AppCompatActivity {
             SingleImage elementWithoutImage = new SingleImage();
             elementWithoutImage.setName(file.getName());
             elementWithoutImage.setPath(file.getPath());
-            sImageArrayList.add(elementWithoutImage);
+            mImageArrayList.add(elementWithoutImage);
         }
-        sAdapter.replaceData(sImageArrayList);
+        mAdapter.replaceData(mImageArrayList);
+
+
     }
 
-    private static class HandlerForImageLoader extends Handler {
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case IMAGE_LOADED:
-                    sAdapter.changeItem(msg.arg1);
-                    break;
-            }
-        }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mLoaderThread.clearQueue();
     }
-
-//    private static class ImageThreadsExecutor implements Executor {
-//
-//        @Override
-//        public void execute(@NonNull Runnable aRunnable) {
-//            new Thread(aRunnable).start();
-//        }
-//    }
-
-    private class ImageLoader implements Runnable {
-
-        int mImageId;
-
-
-        ImageLoader(int aImageId) {
-            mImageId = aImageId;
-        }
-
-        @Override
-        public void run() {
-            Log.i(TAG, "run Start: " + String.valueOf(mImageId));
-            sImageArrayList.get(mImageId).buildThumbnail();
-            Message msg = Message.obtain();
-            msg.arg1 = mImageId;
-            try {
-                sMessenger.send(msg);
-            } catch (RemoteException aE) {
-                aE.printStackTrace();
-            }
-            Log.i(TAG, "run Finish: " + String.valueOf(mImageId));
-        }
-    }
-
 
     /**
      * Holder for RecyclerView. Contain single list element.
      */
-    private final class ListHolder extends RecyclerView.ViewHolder {
+    public final class ListHolder extends RecyclerView.ViewHolder implements Serializable{
 
         ImageView mImage;
         TextView mDescription;
@@ -138,14 +104,12 @@ public class MainActivity extends AppCompatActivity {
          * @param aImage image from list
          */
         void bindView(final SingleImage aImage) {
-            mImage.setImageBitmap(aImage.getThumbnail());
             mDescription.setText(aImage.getName());
-            Log.i(TAG, "bindView: " + String.valueOf(getAdapterPosition()) + String.valueOf(aImage.getThumbnail()));
-            if (aImage.getThumbnail() == null) {
-                mExecutorService.execute(new ImageLoader(getAdapterPosition()));
-            } else {
-                mImage.setBackground(null);
-            }
+            mImage.setImageDrawable(getDrawable(R.drawable.img));
+        }
+
+        void setThumbnail(Bitmap aThumbnail) {
+            mImage.setImageBitmap(aThumbnail);
         }
     }
 
@@ -176,10 +140,6 @@ public class MainActivity extends AppCompatActivity {
             notifyDataSetChanged();
         }
 
-        void changeItem(int aId) {
-            notifyItemChanged(aId);
-        }
-
         @Override
         public ListHolder onCreateViewHolder(ViewGroup aParent, int aViewType) {
             View rowView = LayoutInflater.from(aParent.getContext()).inflate(R.layout.list_item, aParent, false);
@@ -192,15 +152,17 @@ public class MainActivity extends AppCompatActivity {
             SingleImage image = mList.get(aPosition);
             aHolder.bindView(image);
 
+            mLoaderThread.queueThumbnail(aHolder, image.getPath());
             final Intent intent = new Intent(getBaseContext(), BigPictureImageView.class);
             aHolder.mContainer.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    intent.putExtra(OPEN_IMAGE, aHolder.getAdapterPosition());
+                    intent.putExtra(IMAGE_PATH, aHolder.getAdapterPosition());
                     startActivity(intent);
                 }
             });
         }
+
 
         @Override
         public long getItemId(int aIndex) {
@@ -211,7 +173,6 @@ public class MainActivity extends AppCompatActivity {
         public int getItemCount() {
             return mList.size();
         }
-
     }
 
 }

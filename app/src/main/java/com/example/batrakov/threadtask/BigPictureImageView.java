@@ -21,9 +21,9 @@ public class BigPictureImageView extends AppCompatActivity {
 
         mImageView = findViewById(R.id.big_image);
 
-        if (getIntent().hasExtra(MainActivity.OPEN_IMAGE)) {
-            int position = getIntent().getIntExtra(MainActivity.OPEN_IMAGE, 0);
-            mImageView.setImageBitmap(MainActivity.sImageArrayList.get(position).loadImageFromPath());
-        }
+//        if (getIntent().hasExtra(MainActivity.OPEN_IMAGE)) {
+//            int position = getIntent().getIntExtra(MainActivity.OPEN_IMAGE, 0);
+////            mImageView.setImageBitmap(MainActivity.sImageArrayList.get(position).loadImageFromPath());
+//        }
     }
 }

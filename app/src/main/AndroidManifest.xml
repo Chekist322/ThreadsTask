@@ -22,6 +22,7 @@
         <activity android:name=".BigPictureImageView" android:parentActivityName=".MainActivity">
 
         </activity>
+
     </application>
 
 </manifest>
