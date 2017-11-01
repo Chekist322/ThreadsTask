@@ -1,15 +1,12 @@
 package com.example.batrakov.threadtask;
 
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
-import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -23,7 +20,6 @@ import android.widget.TextView;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -41,7 +37,8 @@ public class MainActivity extends AppCompatActivity {
     public static final int IMAGE_LOADED = 0;
 
     private ExecutorService mExecutorService;
-    private ImageThreadsExecutor sExecutor = new ImageThreadsExecutor();
+
+//    private ImageThreadsExecutor sExecutor = new ImageThreadsExecutor();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,13 +78,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private static class ImageThreadsExecutor implements Executor {
-
-        @Override
-        public void execute(@NonNull Runnable aRunnable) {
-            new Thread(aRunnable).start();
-        }
-    }
+//    private static class ImageThreadsExecutor implements Executor {
+//
+//        @Override
+//        public void execute(@NonNull Runnable aRunnable) {
+//            new Thread(aRunnable).start();
+//        }
+//    }
 
     private class ImageLoader implements Runnable {
 
@@ -146,6 +143,8 @@ public class MainActivity extends AppCompatActivity {
             Log.i(TAG, "bindView: " + String.valueOf(getAdapterPosition()) + String.valueOf(aImage.getThumbnail()));
             if (aImage.getThumbnail() == null) {
                 mExecutorService.execute(new ImageLoader(getAdapterPosition()));
+            } else {
+                mImage.setBackground(null);
             }
         }
     }

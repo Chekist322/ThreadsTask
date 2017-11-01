@@ -4,10 +4,11 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
 /**
+ *
  * Created by batrakov on 01.11.17.
  */
 
-public class SingleImage {
+class SingleImage {
 
     private String mName;
     private String mPath;
@@ -18,44 +19,32 @@ public class SingleImage {
         mThumbnail = null;
     }
 
-    SingleImage(String aName, String aPath) {
-        mName = aName;
-        mPath = aPath;
-        mThumbnail = null;
-        buildThumbnail();
-    }
-
     String getName() {
         return mName;
     }
 
-    public void setName(String aName) {
+    void setName(String aName) {
         mName = aName;
     }
 
-    public void buildThumbnail() {
+    void buildThumbnail() {
         BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
         bitmapOptions.inScaled = true;
         bitmapOptions.inSampleSize = 4;
         bitmapOptions.inDensity = 960;
-        bitmapOptions.inTargetDensity = 100;
+        bitmapOptions.inTargetDensity = 400;
         mThumbnail = BitmapFactory.decodeFile(mPath, bitmapOptions);
     }
 
-    public Bitmap getThumbnail() {
+    Bitmap getThumbnail() {
         return mThumbnail;
     }
 
-
-    public String getPath() {
-        return mPath;
-    }
-
-    public void setPath(String aPath) {
+    void setPath(String aPath) {
         mPath = aPath;
     }
 
-    public Bitmap loadImageFromPath() {
+    Bitmap loadImageFromPath() {
         return BitmapFactory.decodeFile(mPath);
     }
 }

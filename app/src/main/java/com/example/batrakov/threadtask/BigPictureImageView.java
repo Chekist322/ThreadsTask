@@ -6,6 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.widget.ImageView;
 
 /**
+ *
  * Created by batrakov on 01.11.17.
  */
 
