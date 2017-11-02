@@ -11,9 +11,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Created by Phoen on 01.11.2017.
+ * Loader thread that allow to load and scale image from external storage
+ * to MainActivity RecyclerView. Add incoming request messages for loading
+ * in queue. Consist of interface to communicate with MainActivity.
  */
-
 public class LoaderThread extends HandlerThread {
 
     private static final int MESSAGE_DOWNLOAD = 0;
@@ -22,20 +23,52 @@ public class LoaderThread extends HandlerThread {
     private ConcurrentMap<MainActivity.ListHolder, String> mRequestMap = new ConcurrentHashMap<>();
     private ThumbnailDownloadListener mThumbnailDownloadListener;
 
+    private static final int SCALE_MULTIPLIER = 4;
+    private static final int SRC_DENSITY = 960;
+    private static final int TARGET_DENSITY = 400;
+
+    /**
+     * Interface to communicate with current MainActivity.
+     */
     public interface ThumbnailDownloadListener {
-        void onThumbnailDownloaded(MainActivity.ListHolder target, Bitmap thumbnail);
+
+        /**
+         * Allow to get info image was successfully loaded.
+         *
+         * @param aHolder target ListHolder.
+         * @param aThumbnail result Bitmap.
+         */
+        void onThumbnailDownloaded(MainActivity.ListHolder aHolder, Bitmap aThumbnail);
     }
 
-    LoaderThread(String name, Handler aHandler) {
-        super(name);
+    /**
+     * Constructor.
+     *
+     * @param aName thread name.
+     * @param aHandler response handler from MainActivity.
+     */
+    LoaderThread(String aName, Handler aHandler) {
+        super(aName);
         mResponseHandler = aHandler;
     }
 
-    void setThumbnailDownloadListener (ThumbnailDownloadListener aListener) {
+    /**
+     * Set download listener for alive MainActivity.
+     *
+     * @param aListener current listener.
+     */
+    void setThumbnailDownloadListener(ThumbnailDownloadListener aListener) {
         mThumbnailDownloadListener = aListener;
     }
 
+    /**
+     * Add new request to message queue.
+     *
+     * @param aHolder target ListHolder.
+     * @param aPath path to target image.
+     */
     void queueThumbnail(MainActivity.ListHolder aHolder, String aPath) {
+        System.out.println(aHolder.getAdapterPosition());
         if (aPath == null) {
             mRequestMap.remove(aHolder);
         } else {
@@ -49,19 +82,27 @@ public class LoaderThread extends HandlerThread {
     protected void onLooperPrepared() {
         mRequestHandler = new Handler(getLooper()) {
             @Override
-            public void handleMessage(Message msg) {
-                if (msg.what == MESSAGE_DOWNLOAD) {
-                    MainActivity.ListHolder holder = (MainActivity.ListHolder) msg.obj;
+            public void handleMessage(Message aMsg) {
+                if (aMsg.what == MESSAGE_DOWNLOAD) {
+                    MainActivity.ListHolder holder = (MainActivity.ListHolder) aMsg.obj;
                     handleRequest(holder);
                 }
             }
         };
     }
 
+    /**
+     * Clear message queue if MainActivity was destroyed.
+     */
     void clearQueue() {
         mRequestHandler.removeMessages(MESSAGE_DOWNLOAD);
     }
 
+    /**
+     * Do asynchronous image loading and send it to MainActivity.
+     *
+     * @param aHolder target ListHolder.
+     */
     private void handleRequest(final MainActivity.ListHolder aHolder) {
         final String path = mRequestMap.get(aHolder);
         if (path == null) {
@@ -69,9 +110,9 @@ public class LoaderThread extends HandlerThread {
         }
         BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
         bitmapOptions.inScaled = true;
-        bitmapOptions.inSampleSize = 4;
-        bitmapOptions.inDensity = 960;
-        bitmapOptions.inTargetDensity = 400;
+        bitmapOptions.inSampleSize = SCALE_MULTIPLIER;
+        bitmapOptions.inDensity = SRC_DENSITY;
+        bitmapOptions.inTargetDensity = TARGET_DENSITY;
         final Bitmap thumbnail = BitmapFactory.decodeFile(path, bitmapOptions);
         mResponseHandler.post(new Runnable() {
             @Override

@@ -5,8 +5,6 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
-import android.os.Message;
-import android.os.Messenger;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -19,42 +17,54 @@ import android.widget.TextView;
 
 import java.io.File;
 import java.io.Serializable;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
+/**
+ * Main application Activity.
+ * Contain RecyclerView and allow to open every image in second Activity.
+ */
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
 
+    private static final int REQUESTED_AMOUNT_OF_THREADS = 4;
+
+    /**
+     * Flag for string path to image.
+     */
     public static final String IMAGE_PATH = "image path";
 
-    private LoaderThread mLoaderThread;
-    ArrayList<SingleImage> mImageArrayList;
-    ListAdapter mAdapter;
+    private CustomThreadManager mThreadManager;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void onCreate(Bundle aSavedInstanceState) {
+        super.onCreate(aSavedInstanceState);
         setContentView(R.layout.activity_main);
 
         Handler responseHandler = new Handler();
 
-        mLoaderThread = new LoaderThread("LoaderThread", responseHandler);
-        mLoaderThread.setThumbnailDownloadListener(new LoaderThread.ThumbnailDownloadListener() {
-            @Override
-            public void onThumbnailDownloaded(ListHolder target, Bitmap thumbnail) {
-                target.setThumbnail(thumbnail);
-            }
-        });
-        mLoaderThread.start();
+        ArrayList<LoaderThread> threads = new ArrayList<>();
 
-        mImageArrayList = new ArrayList<>(50);
+        for (int i = 0; i < REQUESTED_AMOUNT_OF_THREADS; i++) {
+            LoaderThread thread = new LoaderThread("LoaderThread" + i, responseHandler);
+            thread.setThumbnailDownloadListener(new LoaderThread.ThumbnailDownloadListener() {
+                @Override
+                public void onThumbnailDownloaded(ListHolder aHolder, Bitmap aThumbnail) {
+                    aHolder.setThumbnail(aThumbnail);
+                }
+            });
+            threads.add(thread);
+        }
+
+        mThreadManager = new CustomThreadManager(threads, REQUESTED_AMOUNT_OF_THREADS);
+
+        ArrayList<SingleImage> imageArrayList = new ArrayList<>();
 
         RecyclerView recyclerView = findViewById(R.id.list);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        mAdapter = new ListAdapter(mImageArrayList);
-        recyclerView.setAdapter(mAdapter);
+        ListAdapter adapter = new ListAdapter(imageArrayList);
+        recyclerView.setAdapter(adapter);
         ((SimpleItemAnimator) recyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
 
 
@@ -64,9 +74,9 @@ public class MainActivity extends AppCompatActivity {
             SingleImage elementWithoutImage = new SingleImage();
             elementWithoutImage.setName(file.getName());
             elementWithoutImage.setPath(file.getPath());
-            mImageArrayList.add(elementWithoutImage);
+            imageArrayList.add(elementWithoutImage);
         }
-        mAdapter.replaceData(mImageArrayList);
+        adapter.replaceData(imageArrayList);
 
 
     }
@@ -74,17 +84,17 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mLoaderThread.clearQueue();
+        mThreadManager.clearPool();
     }
 
     /**
      * Holder for RecyclerView. Contain single list element.
      */
-    public final class ListHolder extends RecyclerView.ViewHolder implements Serializable{
+    final class ListHolder extends RecyclerView.ViewHolder implements Serializable {
 
-        ImageView mImage;
-        TextView mDescription;
-        View mContainer;
+        private ImageView mImage;
+        private TextView mDescription;
+        private View mContainer;
 
         /**
          * Constructor.
@@ -106,8 +116,14 @@ public class MainActivity extends AppCompatActivity {
         void bindView(final SingleImage aImage) {
             mDescription.setText(aImage.getName());
             mImage.setImageDrawable(getDrawable(R.drawable.img));
+            mThreadManager.sendRequestMessage(this, aImage.getPath());
         }
 
+        /**
+         * Set bitmap to list holder ImageView.
+         *
+         * @param aThumbnail target bitmap.
+         */
         void setThumbnail(Bitmap aThumbnail) {
             mImage.setImageBitmap(aThumbnail);
         }
@@ -148,16 +164,16 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(final ListHolder aHolder, final int aPosition) {
-
-            SingleImage image = mList.get(aPosition);
+            final SingleImage image = mList.get(aPosition);
             aHolder.bindView(image);
 
-            mLoaderThread.queueThumbnail(aHolder, image.getPath());
+
+
             final Intent intent = new Intent(getBaseContext(), BigPictureImageView.class);
             aHolder.mContainer.setOnClickListener(new View.OnClickListener() {
                 @Override
-                public void onClick(View v) {
-                    intent.putExtra(IMAGE_PATH, aHolder.getAdapterPosition());
+                public void onClick(View aView) {
+                    intent.putExtra(IMAGE_PATH, image.getPath());
                     startActivity(intent);
                 }
             });

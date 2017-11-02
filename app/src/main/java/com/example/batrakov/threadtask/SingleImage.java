@@ -1,48 +1,54 @@
 package com.example.batrakov.threadtask;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-
 /**
- *
- * Created by batrakov on 01.11.17.
+ *Class represents single Image element which consist of image name
+ * and path to image in external storage.
  */
-
 class SingleImage {
 
     private String mName;
     private String mPath;
 
+    /**
+     * Constructor.
+     */
     SingleImage() {
         mName = "empty";
     }
 
+    /**
+     * Get image name.
+     *
+     * @return image name.
+     */
     String getName() {
         return mName;
     }
 
+    /**
+     * Set image name.
+     *
+     * @param aName target name.
+     */
     void setName(String aName) {
         mName = aName;
     }
 
-    Bitmap buildThumbnail() {
-        BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
-        bitmapOptions.inScaled = true;
-        bitmapOptions.inSampleSize = 4;
-        bitmapOptions.inDensity = 960;
-        bitmapOptions.inTargetDensity = 400;
-        return BitmapFactory.decodeFile(mPath, bitmapOptions);
-    }
-
+    /**
+     * Set path to image.
+     *
+     * @param aPath target path.
+     */
     void setPath(String aPath) {
         mPath = aPath;
     }
 
-    public String getPath() {
+    /**
+     * Get image path.
+     *
+     * @return image path in external storage.
+     */
+    String getPath() {
         return mPath;
-    }
-
-    Bitmap loadImageFromPath() {
-        return BitmapFactory.decodeFile(mPath);
     }
 }

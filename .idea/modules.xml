@@ -2,10 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://E:\Andrusha\ThreadsTask\ThreadTask.iml" filepath="E:\Andrusha\ThreadsTask\ThreadTask.iml" />
-      <module fileurl="file://$PROJECT_DIR$/ThreadsTask.iml" filepath="$PROJECT_DIR$/ThreadsTask.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ThreadTask.iml" filepath="$PROJECT_DIR$/ThreadTask.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://E:\Andrusha\ThreadsTask\app\app.iml" filepath="E:\Andrusha\ThreadsTask\app\app.iml" />
     </modules>
   </component>
 </project>

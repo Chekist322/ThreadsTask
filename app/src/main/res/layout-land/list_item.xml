@@ -13,7 +13,7 @@
         android:layout_width="@android:dimen/thumbnail_width"
         android:layout_height="@android:dimen/thumbnail_height"
         android:layout_margin="10dp"
-        android:background="@mipmap/ic_launcher"/>
+        />
 
     <TextView
         android:id="@+id/image_description"
