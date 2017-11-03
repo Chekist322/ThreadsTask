@@ -21,7 +21,7 @@ public class LoaderThread extends HandlerThread {
     private Handler mRequestHandler;
     private Handler mResponseHandler;
     private ConcurrentMap<MainActivity.ListHolder, String> mRequestMap = new ConcurrentHashMap<>();
-    private ThumbnailDownloadListener mThumbnailDownloadListener;
+    private ThumbnailLoadListener mThumbnailLoadListener;
 
     private static final int SCALE_MULTIPLIER = 4;
     private static final int SRC_DENSITY = 960;
@@ -30,7 +30,7 @@ public class LoaderThread extends HandlerThread {
     /**
      * Interface to communicate with current MainActivity.
      */
-    public interface ThumbnailDownloadListener {
+    public interface ThumbnailLoadListener {
 
         /**
          * Allow to get info image was successfully loaded.
@@ -38,7 +38,7 @@ public class LoaderThread extends HandlerThread {
          * @param aHolder target ListHolder.
          * @param aThumbnail result Bitmap.
          */
-        void onThumbnailDownloaded(MainActivity.ListHolder aHolder, Bitmap aThumbnail);
+        void onThumbnailLoaded(MainActivity.ListHolder aHolder, Bitmap aThumbnail);
     }
 
     /**
@@ -53,12 +53,12 @@ public class LoaderThread extends HandlerThread {
     }
 
     /**
-     * Set download listener for alive MainActivity.
+     * Set load listener for alive MainActivity.
      *
      * @param aListener current listener.
      */
-    void setThumbnailDownloadListener(ThumbnailDownloadListener aListener) {
-        mThumbnailDownloadListener = aListener;
+    void setThumbnailLoadListener(ThumbnailLoadListener aListener) {
+        mThumbnailLoadListener = aListener;
     }
 
     /**
@@ -121,7 +121,7 @@ public class LoaderThread extends HandlerThread {
                     return;
                 }
                 mRequestMap.remove(aHolder);
-                mThumbnailDownloadListener.onThumbnailDownloaded(aHolder, thumbnail);
+                mThumbnailLoadListener.onThumbnailLoaded(aHolder, thumbnail);
             }
         });
     }

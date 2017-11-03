@@ -25,7 +25,7 @@ import java.util.ArrayList;
  */
 public class MainActivity extends AppCompatActivity {
 
-    private static final String TAG = "MainActivity";
+//    private static final String TAG = "MainActivity";
 
     private static final int REQUESTED_AMOUNT_OF_THREADS = 4;
 
@@ -47,9 +47,9 @@ public class MainActivity extends AppCompatActivity {
 
         for (int i = 0; i < REQUESTED_AMOUNT_OF_THREADS; i++) {
             LoaderThread thread = new LoaderThread("LoaderThread" + i, responseHandler);
-            thread.setThumbnailDownloadListener(new LoaderThread.ThumbnailDownloadListener() {
+            thread.setThumbnailLoadListener(new LoaderThread.ThumbnailLoadListener() {
                 @Override
-                public void onThumbnailDownloaded(ListHolder aHolder, Bitmap aThumbnail) {
+                public void onThumbnailLoaded(ListHolder aHolder, Bitmap aThumbnail) {
                     aHolder.setThumbnail(aThumbnail);
                 }
             });
