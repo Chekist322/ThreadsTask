@@ -25,8 +25,6 @@ import java.util.ArrayList;
  */
 public class MainActivity extends AppCompatActivity {
 
-//    private static final String TAG = "MainActivity";
-
     private static final int REQUESTED_AMOUNT_OF_THREADS = 4;
 
     /**
@@ -162,8 +160,6 @@ public class MainActivity extends AppCompatActivity {
             final SingleImage image = mList.get(aPosition);
             aHolder.bindView(image);
 
-
-
             final Intent intent = new Intent(getBaseContext(), BigPictureImageActivity.class);
             aHolder.mContainer.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -172,7 +168,6 @@ public class MainActivity extends AppCompatActivity {
                     startActivity(intent);
                 }
             });
-
             mThreadManager.sendRequestMessage(aHolder, image.getPath());
         }
 
