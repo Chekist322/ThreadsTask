@@ -22,7 +22,9 @@ public class LoaderThread extends HandlerThread {
     private ConcurrentMap<MainActivity.ListHolder, String> mRequestMap;
     private ThumbnailLoadListener mThumbnailLoadListener;
 
-    private static final int SCALE_MULTIPLIER = 12;
+    private static final int TARGET_WIDTH = 384;
+
+    private static final int TARGET_DENSITY = 441;
 
     /**
      * Interface to communicate with current MainActivity.
@@ -122,7 +124,10 @@ public class LoaderThread extends HandlerThread {
             return;
         }
         BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
-        bitmapOptions.inSampleSize = SCALE_MULTIPLIER;
+        bitmapOptions.inScaled = true;
+        bitmapOptions.inSampleSize = getMultiplier(path);
+        bitmapOptions.inTargetDensity = TARGET_DENSITY;
+
         final Bitmap thumbnail = BitmapFactory.decodeFile(path, bitmapOptions);
         mResponseHandler.post(new Runnable() {
             @Override
@@ -134,5 +139,18 @@ public class LoaderThread extends HandlerThread {
                 mThumbnailLoadListener.onThumbnailLoaded(aHolder, thumbnail);
             }
         });
+    }
+
+    /**
+     * Get multiplier for image scaling.
+     *
+     * @param aPath path to target image.
+     * @return scale multiplier.
+     */
+    private int getMultiplier(String aPath) {
+        BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+        bitmapOptions.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(aPath, bitmapOptions);
+        return bitmapOptions.outHeight / TARGET_WIDTH;
     }
 }
