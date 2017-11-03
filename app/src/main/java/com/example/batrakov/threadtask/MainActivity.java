@@ -67,7 +67,6 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
         ((SimpleItemAnimator) recyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
 
-
         File sImagesDirectory = new File(Environment.getExternalStorageDirectory() + "/images");
         for (int i = 0; i < sImagesDirectory.listFiles().length; i++) {
             File file = sImagesDirectory.listFiles()[i];
@@ -77,8 +76,6 @@ public class MainActivity extends AppCompatActivity {
             imageArrayList.add(elementWithoutImage);
         }
         adapter.replaceData(imageArrayList);
-
-
     }
 
     @Override
@@ -115,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
          */
         void bindView(final SingleImage aImage) {
             mDescription.setText(aImage.getName());
-            mImage.setImageDrawable(getDrawable(R.drawable.img));
+            mImage.setImageDrawable(getResources().getDrawable(R.drawable.img, null));
         }
 
         /**

@@ -7,7 +7,6 @@ import android.os.HandlerThread;
 import android.os.Message;
 
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -20,12 +19,10 @@ public class LoaderThread extends HandlerThread {
     private static final int MESSAGE_LOAD = 0;
     private Handler mRequestHandler;
     private Handler mResponseHandler;
-    private ConcurrentMap<MainActivity.ListHolder, String> mRequestMap = new ConcurrentHashMap<>();
+    private ConcurrentMap<MainActivity.ListHolder, String> mRequestMap;
     private ThumbnailLoadListener mThumbnailLoadListener;
 
-    private static final int SCALE_MULTIPLIER = 4;
-    private static final int SRC_DENSITY = 960;
-    private static final int TARGET_DENSITY = 400;
+    private static final int SCALE_MULTIPLIER = 12;
 
     /**
      * Interface to communicate with current MainActivity.
@@ -35,7 +32,7 @@ public class LoaderThread extends HandlerThread {
         /**
          * Allow to get info image was successfully loaded.
          *
-         * @param aHolder target ListHolder.
+         * @param aHolder    target ListHolder.
          * @param aThumbnail result Bitmap.
          */
         void onThumbnailLoaded(MainActivity.ListHolder aHolder, Bitmap aThumbnail);
@@ -44,7 +41,7 @@ public class LoaderThread extends HandlerThread {
     /**
      * Constructor.
      *
-     * @param aName thread name.
+     * @param aName    thread name.
      * @param aHandler response handler from MainActivity.
      */
     LoaderThread(String aName, Handler aHandler) {
@@ -65,16 +62,33 @@ public class LoaderThread extends HandlerThread {
      * Add new request to message queue.
      *
      * @param aHolder target ListHolder.
-     * @param aPath path to target image.
+     * @param aPath   path to target image.
+     * @param aMap    current map of holders.
      */
-    void queueThumbnail(MainActivity.ListHolder aHolder, String aPath) {
-        if (aPath == null) {
-            mRequestMap.remove(aHolder);
-        } else {
-            mRequestMap.put(aHolder, aPath);
-            mRequestHandler.obtainMessage(MESSAGE_LOAD, aHolder)
-                    .sendToTarget();
+    void queueThumbnail(MainActivity.ListHolder aHolder, String aPath,
+                        ConcurrentMap<MainActivity.ListHolder, String> aMap) {
+        mRequestMap = aMap;
+        if (null == aHolder) {
+            return;
         }
+
+        if (null == aPath || aPath.isEmpty()) {
+            mRequestMap.remove(aHolder);
+            return;
+        }
+
+        String path = mRequestMap.get(aHolder);
+        if (null != path) {
+            if (path.equals(aPath)) {
+                return;
+            } else {
+                mRequestMap.remove(aHolder);
+            }
+        }
+
+        mRequestMap.put(aHolder, aPath);
+        mRequestHandler.obtainMessage(MESSAGE_LOAD, aHolder)
+                .sendToTarget();
     }
 
     @Override
@@ -108,16 +122,12 @@ public class LoaderThread extends HandlerThread {
             return;
         }
         BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
-        bitmapOptions.inScaled = true;
         bitmapOptions.inSampleSize = SCALE_MULTIPLIER;
-        bitmapOptions.inDensity = SRC_DENSITY;
-        bitmapOptions.inTargetDensity = TARGET_DENSITY;
         final Bitmap thumbnail = BitmapFactory.decodeFile(path, bitmapOptions);
         mResponseHandler.post(new Runnable() {
             @Override
             public void run() {
                 if (!Objects.equals(mRequestMap.get(aHolder), path)) {
-                    System.out.println("kek" + ": " + aHolder.getAdapterPosition());
                     return;
                 }
                 mRequestMap.remove(aHolder);
