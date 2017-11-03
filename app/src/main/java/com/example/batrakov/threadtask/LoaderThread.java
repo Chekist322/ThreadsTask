@@ -96,7 +96,7 @@ public class LoaderThread extends HandlerThread {
         mRequestHandler = new Handler(getLooper()) {
             @Override
             public void handleMessage(Message aMsg) {
-                if (aMsg.what == MESSAGE_LOAD) {
+                if (MESSAGE_LOAD == aMsg.what) {
                     MainActivity.ListHolder holder = (MainActivity.ListHolder) aMsg.obj;
                     handleRequest(holder);
                 }
@@ -118,7 +118,7 @@ public class LoaderThread extends HandlerThread {
      */
     private void handleRequest(final MainActivity.ListHolder aHolder) {
         final String path = mRequestMap.get(aHolder);
-        if (path == null) {
+        if (null == path) {
             return;
         }
         BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();

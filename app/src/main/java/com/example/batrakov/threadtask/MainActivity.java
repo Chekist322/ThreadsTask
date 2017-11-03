@@ -164,7 +164,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-            final Intent intent = new Intent(getBaseContext(), BigPictureImageView.class);
+            final Intent intent = new Intent(getBaseContext(), BigPictureImageActivity.class);
             aHolder.mContainer.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View aView) {

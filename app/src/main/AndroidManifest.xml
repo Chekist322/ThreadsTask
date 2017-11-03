@@ -19,7 +19,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".BigPictureImageView" android:parentActivityName=".MainActivity">
+        <activity android:name=".BigPictureImageActivity" android:parentActivityName=".MainActivity">
 
         </activity>
 

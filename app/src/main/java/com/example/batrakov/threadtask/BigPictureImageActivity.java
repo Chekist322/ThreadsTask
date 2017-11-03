@@ -4,9 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.Nullable;
-import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.ImageView;
 
@@ -15,9 +13,9 @@ import java.lang.ref.WeakReference;
 /**
  * Represent requested image in full size.
  */
-public class BigPictureImageView extends AppCompatActivity {
+public class BigPictureImageActivity extends AppCompatActivity {
 
-    ImageView mImageView;
+    private ImageView mImageView;
 
     @Override
     protected void onCreate(@Nullable Bundle aSavedInstanceState) {
@@ -33,12 +31,20 @@ public class BigPictureImageView extends AppCompatActivity {
         }
     }
 
+    /**
+     * AsyncTask to load image.
+     */
     static class LoadImage extends AsyncTask<String, Void, Bitmap> {
 
-        private WeakReference<BigPictureImageView> mReference;
+        private WeakReference<BigPictureImageActivity> mReference;
 
-        LoadImage(BigPictureImageView aView) {
-            mReference = new WeakReference<>(aView);
+        /**
+         * Constructor.
+         *
+         * @param aActivity target activity.
+         */
+        LoadImage(BigPictureImageActivity aActivity) {
+            mReference = new WeakReference<>(aActivity);
         }
 
         @Override
@@ -48,7 +54,9 @@ public class BigPictureImageView extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Bitmap aBitmap) {
-            mReference.get().mImageView.setImageBitmap(aBitmap);
+            if (null != mReference.get()) {
+                mReference.get().mImageView.setImageBitmap(aBitmap);
+            }
         }
     }
 }

@@ -5,10 +5,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Created by batrakov on 02.11.17.
+ * Thread manager class that consist of current Map of requests and ArrayList of working threads.
  */
-
-public class CustomThreadManager {
+class CustomThreadManager {
 
     private ArrayList<LoaderThread> mThreads;
 
@@ -18,7 +17,13 @@ public class CustomThreadManager {
 
     private int mTicker;
 
-    CustomThreadManager (ArrayList<LoaderThread> aThreads, int aAmountOfThreads) {
+    /**
+     * Constructor.
+     *
+     * @param aThreads thread for loading images
+     * @param aAmountOfThreads chosen amount of threads
+     */
+    CustomThreadManager(ArrayList<LoaderThread> aThreads, int aAmountOfThreads) {
         mTicker = 0;
         mAmountOfThreads = aAmountOfThreads;
         mThreads = aThreads;
@@ -27,6 +32,12 @@ public class CustomThreadManager {
         }
     }
 
+    /**
+     * Send request to thread for loading image.
+     *
+     * @param aHolder target holder from MainActivity.
+     * @param aPath path to target image.
+     */
     void sendRequestMessage(MainActivity.ListHolder aHolder, String aPath) {
         if (mTicker == mAmountOfThreads) {
             mTicker = 0;
@@ -35,6 +46,9 @@ public class CustomThreadManager {
         mTicker++;
     }
 
+    /**
+     * Clear and stop threads message queues.
+     */
     void clearPool() {
         for (int i = 0; i < mAmountOfThreads; i++) {
             mThreads.get(i).clearQueue();
