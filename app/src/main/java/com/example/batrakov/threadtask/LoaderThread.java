@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class LoaderThread extends HandlerThread {
 
-    private static final int MESSAGE_DOWNLOAD = 0;
+    private static final int MESSAGE_LOAD = 0;
     private Handler mRequestHandler;
     private Handler mResponseHandler;
     private ConcurrentMap<MainActivity.ListHolder, String> mRequestMap = new ConcurrentHashMap<>();
@@ -68,12 +68,11 @@ public class LoaderThread extends HandlerThread {
      * @param aPath path to target image.
      */
     void queueThumbnail(MainActivity.ListHolder aHolder, String aPath) {
-        System.out.println(aHolder.getAdapterPosition());
         if (aPath == null) {
             mRequestMap.remove(aHolder);
         } else {
             mRequestMap.put(aHolder, aPath);
-            mRequestHandler.obtainMessage(MESSAGE_DOWNLOAD, aHolder)
+            mRequestHandler.obtainMessage(MESSAGE_LOAD, aHolder)
                     .sendToTarget();
         }
     }
@@ -83,7 +82,7 @@ public class LoaderThread extends HandlerThread {
         mRequestHandler = new Handler(getLooper()) {
             @Override
             public void handleMessage(Message aMsg) {
-                if (aMsg.what == MESSAGE_DOWNLOAD) {
+                if (aMsg.what == MESSAGE_LOAD) {
                     MainActivity.ListHolder holder = (MainActivity.ListHolder) aMsg.obj;
                     handleRequest(holder);
                 }
@@ -95,7 +94,7 @@ public class LoaderThread extends HandlerThread {
      * Clear message queue if MainActivity was destroyed.
      */
     void clearQueue() {
-        mRequestHandler.removeMessages(MESSAGE_DOWNLOAD);
+        mRequestHandler.removeMessages(MESSAGE_LOAD);
     }
 
     /**
@@ -118,6 +117,7 @@ public class LoaderThread extends HandlerThread {
             @Override
             public void run() {
                 if (!Objects.equals(mRequestMap.get(aHolder), path)) {
+                    System.out.println("kek" + ": " + aHolder.getAdapterPosition());
                     return;
                 }
                 mRequestMap.remove(aHolder);

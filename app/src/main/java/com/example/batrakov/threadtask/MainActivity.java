@@ -116,7 +116,6 @@ public class MainActivity extends AppCompatActivity {
         void bindView(final SingleImage aImage) {
             mDescription.setText(aImage.getName());
             mImage.setImageDrawable(getDrawable(R.drawable.img));
-            mThreadManager.sendRequestMessage(this, aImage.getPath());
         }
 
         /**
@@ -142,7 +141,6 @@ public class MainActivity extends AppCompatActivity {
          * @param aList target list for fill.
          */
         ListAdapter(ArrayList<SingleImage> aList) {
-            setHasStableIds(true);
             mList = aList;
         }
 
@@ -177,6 +175,8 @@ public class MainActivity extends AppCompatActivity {
                     startActivity(intent);
                 }
             });
+
+            mThreadManager.sendRequestMessage(aHolder, image.getPath());
         }
 
 
