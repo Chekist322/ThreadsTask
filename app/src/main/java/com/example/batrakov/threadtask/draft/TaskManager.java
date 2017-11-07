@@ -60,7 +60,7 @@ public class TaskManager implements Serializable {
      */
     public void clear() {
         mTaskQueue.clear();
-        while (mThreadsList.isEmpty()) {
+        while (!mThreadsList.isEmpty()) {
             mThreadsList.poll().interrupt();
         }
     }
