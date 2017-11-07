@@ -3,22 +3,25 @@ package com.example.batrakov.threadtask.draft;
 import android.graphics.BitmapFactory;
 import android.os.Message;
 
-import java.io.File;
-
 /**
- * Created by batrakov on 07.11.17.
+ * Describe task to load scaled image from external storage.
  */
-
-public class IconfierTask extends Task {
+public class ThumbnailTask extends Task {
 
     private final Message mCallback;
     private final BitmapFactory.Options mBitmapOptions;
     private final String mImagePath;
 
-    public IconfierTask(File aImageFile, BitmapFactory.Options aBitmapOptions, Message aCallbackMessage) {
+    /**
+     *
+     * @param aImagePath path to image.
+     * @param aBitmapOptions options for scaling.
+     * @param aCallbackMessage callback.
+     */
+    public ThumbnailTask(String aImagePath, BitmapFactory.Options aBitmapOptions, Message aCallbackMessage) {
         mCallback = aCallbackMessage;
         mBitmapOptions = aBitmapOptions;
-        mImagePath = aImageFile.getPath();
+        mImagePath = aImagePath;
     }
 
     @Override

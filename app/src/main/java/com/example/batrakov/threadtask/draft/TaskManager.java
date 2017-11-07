@@ -1,43 +1,67 @@
 package com.example.batrakov.threadtask.draft;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 
 /**
- * Created by batrakov on 07.11.17.
+ * Manage incoming tasks to load images and execute threads for this tasks.
  */
+public class TaskManager implements Serializable {
+    private LinkedList<Task> mTaskQueue;
+    private LinkedList<Worker> mThreadsList;
 
-public class TaskManager {
-    private TaskQueue mTaskQueue;
-    private boolean mInWork = true;
-    private final LinkedList<Worker> mTasks = new LinkedList<>();
-
-    public TaskManager() {
-        for (int i = 0; i < 4; i++) {
+    /**
+     * Constructor.
+     *
+     * @param aAmountOfThreads required amount of worker threads.
+     */
+    public TaskManager(int aAmountOfThreads) {
+        mTaskQueue = new LinkedList<>();
+        mThreadsList = new LinkedList<>();
+        for (int i = 0; i < aAmountOfThreads; i++) {
             Worker task = new Worker(this);
-            mTasks.add(task);
+            mThreadsList.add(task);
             task.start();
         }
     }
 
-    public Task getTask() {
+    /**
+     * Get task from queue.
+     *
+     * @return task from queue.
+     */
+    Task getTask() {
         synchronized (this) {
-            if (mTaskQueue.isEmpty()) {
-                while (mInWork) {
-                    try {
-                        wait();
-                    } catch (InterruptedException aE) {
-                        aE.printStackTrace();
-                    }
+            while (mTaskQueue.isEmpty()) {
+                try {
+                    wait();
+                } catch (InterruptedException aE) {
+                    aE.printStackTrace();
                 }
             }
+            return mTaskQueue.poll();
         }
-        return mTaskQueue.poll();
     }
 
+    /**
+     * Add task to queue.
+     *
+     * @param aTask incoming task.
+     */
     public void addTask(Task aTask) {
         synchronized (this) {
             mTaskQueue.add(aTask);
             notifyAll();
+        }
+    }
+
+    /**
+     * Clear tasks queue and interrupt worker threads.
+     */
+    public void clear() {
+        mTaskQueue.clear();
+        while (mThreadsList.isEmpty()) {
+            mThreadsList.poll().interrupt();
         }
     }
 }

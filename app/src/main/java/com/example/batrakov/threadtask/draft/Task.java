@@ -1,21 +1,31 @@
 package com.example.batrakov.threadtask.draft;
 
 /**
- * Created by batrakov on 07.11.17.
+ * Describe task to load image.
  */
-
 public class Task {
+
     private boolean mIsCanceled;
 
+    /**
+     * Cancel task.
+     */
     public void cancel() {
         mIsCanceled = true;
     }
 
-    public boolean isCanceled() {
+    /**
+     * Check if task is canceled.
+     *
+     * @return cancel state.
+     */
+    boolean isCanceled() {
         return mIsCanceled;
     }
 
+    /**
+     * Start task process.
+     */
     public void process() {
-
     }
 }

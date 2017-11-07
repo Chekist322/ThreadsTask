@@ -1,12 +1,16 @@
 package com.example.batrakov.threadtask.draft;
 
 /**
- * Created by batrakov on 07.11.17.
+ * Worker thread for loading image.
  */
-
 public class Worker extends Thread {
     private final TaskManager mTaskManager;
 
+    /**
+     * Constructor.
+     *
+     * @param aTaskManager task for thread manager.
+     */
     Worker(TaskManager aTaskManager) {
         mTaskManager = aTaskManager;
     }

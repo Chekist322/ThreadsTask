@@ -2,9 +2,11 @@ package com.example.batrakov.threadtask;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -14,6 +16,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.example.batrakov.threadtask.draft.ThumbnailTask;
+import com.example.batrakov.threadtask.draft.TaskManager;
 
 import java.io.File;
 import java.io.Serializable;
@@ -25,36 +30,26 @@ import java.util.ArrayList;
  */
 public class MainActivity extends AppCompatActivity {
 
-    private static final int REQUESTED_AMOUNT_OF_THREADS = 4;
+    private static final int TARGET_WIDTH = 384;
+
+    private static final int TARGET_DENSITY = 441;
+
+    private static final int AMOUNT_OF_THREADS = 4;
+
 
     /**
      * Flag for string path to image.
      */
     public static final String IMAGE_PATH = "image path";
 
-    private CustomThreadManager mThreadManager;
+    private TaskManager mTaskManager;
 
     @Override
     protected void onCreate(Bundle aSavedInstanceState) {
         super.onCreate(aSavedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Handler responseHandler = new Handler();
-
-        ArrayList<LoaderThread> threads = new ArrayList<>();
-
-        for (int i = 0; i < REQUESTED_AMOUNT_OF_THREADS; i++) {
-            LoaderThread thread = new LoaderThread("LoaderThread" + i, responseHandler);
-            thread.setThumbnailLoadListener(new LoaderThread.ThumbnailLoadListener() {
-                @Override
-                public void onThumbnailLoaded(ListHolder aHolder, Bitmap aThumbnail) {
-                    aHolder.setThumbnail(aThumbnail);
-                }
-            });
-            threads.add(thread);
-        }
-
-        mThreadManager = new CustomThreadManager(threads, REQUESTED_AMOUNT_OF_THREADS);
+        mTaskManager = new TaskManager(AMOUNT_OF_THREADS);
 
         ArrayList<SingleImage> imageArrayList = new ArrayList<>();
 
@@ -79,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mThreadManager.clearPool();
+        mTaskManager.clear();
     }
 
     /**
@@ -90,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
         private ImageView mImage;
         private TextView mDescription;
         private View mContainer;
+        private ThumbnailTask mTask;
 
         /**
          * Constructor.
@@ -121,12 +117,35 @@ public class MainActivity extends AppCompatActivity {
         void setThumbnail(Bitmap aThumbnail) {
             mImage.setImageBitmap(aThumbnail);
         }
+
+        /**
+         * Get task for current holder.
+         *
+         * @return current holder task.
+         */
+        ThumbnailTask getTask() {
+            return mTask;
+        }
+
+        /**
+         * Set task for current holder.
+         *
+         * @param aTask target task.
+         */
+        void setTask(ThumbnailTask aTask) {
+            mTask = aTask;
+        }
     }
 
     /**
      * Adapter for recycler view. Allow to fill and update list.
      */
     private class ListAdapter extends RecyclerView.Adapter<ListHolder> {
+        @Override
+        public void onViewDetachedFromWindow(ListHolder aHolder) {
+            super.onViewDetachedFromWindow(aHolder);
+            aHolder.getTask().cancel();
+        }
 
         private ArrayList<SingleImage> mList;
 
@@ -168,7 +187,27 @@ public class MainActivity extends AppCompatActivity {
                     startActivity(intent);
                 }
             });
-            mThreadManager.sendRequestMessage(aHolder, image.getPath());
+
+            BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+            bitmapOptions.inScaled = true;
+            bitmapOptions.inSampleSize = getMultiplier(image.getPath());
+            bitmapOptions.inTargetDensity = TARGET_DENSITY;
+
+            Handler imageChanger = new Handler(new Handler.Callback() {
+                @Override
+                public boolean handleMessage(Message aMessage) {
+                    if (aMessage.obj != null) {
+                        aHolder.setThumbnail((Bitmap) aMessage.obj);
+                    }
+                    return true;
+                }
+            });
+
+            Message callback = Message.obtain();
+            callback.setTarget(imageChanger);
+
+            aHolder.setTask(new ThumbnailTask(image.getPath(), bitmapOptions, callback));
+            mTaskManager.addTask(aHolder.getTask());
         }
 
 
@@ -181,6 +220,20 @@ public class MainActivity extends AppCompatActivity {
         public int getItemCount() {
             return mList.size();
         }
+    }
+
+    /**
+     * Get multiplier for image scaling.
+     *
+     * @param aPath path to target image.
+     *
+     * @return scale multiplier.
+     */
+    private int getMultiplier(String aPath) {
+        BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+        bitmapOptions.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(aPath, bitmapOptions);
+        return bitmapOptions.outHeight / TARGET_WIDTH;
     }
 
 }
