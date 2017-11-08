@@ -25,6 +25,7 @@ public class BigPictureImageActivity extends AppCompatActivity {
     private ImageView mImageView;
     private boolean mServiceBound;
     private TaskManager mTaskManager;
+    private ImageLoaderTask mLoaderTask;
 
     @Override
     protected void onCreate(@Nullable Bundle aSavedInstanceState) {
@@ -56,6 +57,7 @@ public class BigPictureImageActivity extends AppCompatActivity {
                 String path = getIntent().getStringExtra(MainActivity.IMAGE_PATH);
                 Message message = Message.obtain();
                 message.setTarget(imageChanger);
+                mLoaderTask = new ImageLoaderTask(path, message);
                 taskService.addTask(new ImageLoaderTask(path, message));
             }
         }
@@ -69,6 +71,9 @@ public class BigPictureImageActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        if (mLoaderTask != null) {
+            mLoaderTask.cancel();
+        }
         if (mServiceBound) {
             unbindService(mConnection);
         }
