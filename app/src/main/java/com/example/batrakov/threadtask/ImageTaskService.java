@@ -41,7 +41,7 @@ public class ImageTaskService extends Service {
     /**
      * Service binder that allow to communicate with parent Activity.
      */
-    public class ImageTaskBinder extends Binder {
+    class ImageTaskBinder extends Binder {
 
         /**
          * Get service by binder.

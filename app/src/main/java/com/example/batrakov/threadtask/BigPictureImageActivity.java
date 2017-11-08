@@ -14,7 +14,6 @@ import android.util.Log;
 import android.widget.ImageView;
 
 import com.example.batrakov.threadtask.loadImageTask.ImageLoaderTask;
-import com.example.batrakov.threadtask.loadImageTask.TaskManager;
 
 /**
  * Represent requested image in full size.
@@ -24,7 +23,6 @@ public class BigPictureImageActivity extends AppCompatActivity {
     private static final String TAG = BigPictureImageActivity.class.getSimpleName();
     private ImageView mImageView;
     private boolean mServiceBound;
-    private TaskManager mTaskManager;
     private ImageLoaderTask mLoaderTask;
 
     @Override

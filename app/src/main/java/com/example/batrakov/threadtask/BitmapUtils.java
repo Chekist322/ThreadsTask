@@ -5,7 +5,7 @@ import android.graphics.BitmapFactory;
 /**
  * Utility class for calculations bitmaps parameters.
  */
-class BitmapUtils {
+abstract class BitmapUtils {
     /**
      * Calculate scale multiplier for thumbnail scaling.
      *
