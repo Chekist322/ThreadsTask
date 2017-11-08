@@ -1,25 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/image_container"
-    android:layout_width="match_parent"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:background="@drawable/list_item_rect"
+    android:layout_margin="10dp"
     android:gravity="center_vertical">
 
     <ImageView
         android:id="@+id/image"
         android:layout_width="1in"
         android:layout_height="1in"
-        android:layout_margin="10dp"
         />
 
-    <TextView
-        android:id="@+id/image_description"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
-        android:text="TextView"
-        android:textSize="24sp"/>
 </LinearLayout>

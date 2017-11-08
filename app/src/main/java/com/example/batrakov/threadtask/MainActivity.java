@@ -1,24 +1,32 @@
 package com.example.batrakov.threadtask;
 
+import android.Manifest;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.ServiceConnection;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SimpleItemAnimator;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.example.batrakov.threadtask.draft.ThumbnailTask;
-import com.example.batrakov.threadtask.draft.TaskManager;
+import com.example.batrakov.threadtask.loadImageTask.ThumbnailTask;
 
 import java.io.File;
 import java.io.Serializable;
@@ -30,51 +38,89 @@ import java.util.ArrayList;
  */
 public class MainActivity extends AppCompatActivity {
 
-    private static final int TARGET_WIDTH = 384;
-
-    private static final int TARGET_DENSITY = 441;
-
-    private static final int AMOUNT_OF_THREADS = 4;
-
+    private static final int INCH = 1;
 
     /**
      * Flag for string path to image.
      */
     public static final String IMAGE_PATH = "image path";
+    private static final int PERMISSION_REQUEST_CODE = 0;
+    private static final String TAG = MainActivity.class.getSimpleName();
+    private static final int LANDSCAPE_COL_SPAN = 3;
 
-    private TaskManager mTaskManager;
+    private int mTargetSize;
+    private int mTargetDensity;
+    private boolean mServiceBound = false;
+
+    private ImageTaskService mTaskService;
+
+    @Override
+    public void onRequestPermissionsResult(int aRequestCode,
+                                           @NonNull String[] aPermissions, @NonNull int[] aGrantResults) {
+        super.onRequestPermissionsResult(aRequestCode, aPermissions, aGrantResults);
+    }
 
     @Override
     protected void onCreate(Bundle aSavedInstanceState) {
         super.onCreate(aSavedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mTaskManager = new TaskManager(AMOUNT_OF_THREADS);
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
 
-        ArrayList<SingleImage> imageArrayList = new ArrayList<>();
+        Intent startImageTaskServiceIntent = new Intent(this, ImageTaskService.class);
+        bindService(startImageTaskServiceIntent, mConnection, BIND_AUTO_CREATE);
 
-        RecyclerView recyclerView = findViewById(R.id.list);
-
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        ListAdapter adapter = new ListAdapter(imageArrayList);
-        recyclerView.setAdapter(adapter);
-        ((SimpleItemAnimator) recyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
-
-        File sImagesDirectory = new File(Environment.getExternalStorageDirectory() + "/images");
-        for (int i = 0; i < sImagesDirectory.listFiles().length; i++) {
-            File file = sImagesDirectory.listFiles()[i];
-            SingleImage elementWithoutImage = new SingleImage();
-            elementWithoutImage.setName(file.getName());
-            elementWithoutImage.setPath(file.getPath());
-            imageArrayList.add(elementWithoutImage);
-        }
-        adapter.replaceData(imageArrayList);
+        mTargetDensity = getResources().getDisplayMetrics().densityDpi;
+        mTargetSize = INCH * mTargetDensity;
     }
+
+    private ServiceConnection mConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName aName, IBinder aBinder) {
+            ImageTaskService.ImageTaskBinder binder = (ImageTaskService.ImageTaskBinder) aBinder;
+            mTaskService = binder.getService();
+            mServiceBound = true;
+
+            ArrayList<SingleImage> imageArrayList = new ArrayList<>();
+
+            RecyclerView recyclerView = findViewById(R.id.list);
+
+            if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+                recyclerView.setLayoutManager(new LinearLayoutManager(getBaseContext()));
+            } else {
+                recyclerView.setLayoutManager(new GridLayoutManager(getBaseContext(), LANDSCAPE_COL_SPAN));
+            }
+            ListAdapter adapter = new ListAdapter(imageArrayList);
+            recyclerView.setAdapter(adapter);
+            ((SimpleItemAnimator) recyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
+
+            File sImagesDirectory = new File(Environment.getExternalStorageDirectory() + "/images");
+            File[] listFiles = sImagesDirectory.listFiles();
+            for (File file : listFiles) {
+                SingleImage elementWithoutImage = new SingleImage();
+                elementWithoutImage.setName(file.getName());
+                elementWithoutImage.setPath(file.getPath());
+                imageArrayList.add(elementWithoutImage);
+            }
+            adapter.replaceData(imageArrayList);
+
+            Log.i(TAG, "onServiceConnected: ");
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName aName) {
+            Log.i(TAG, "onServiceDisconnected: ");
+            mServiceBound = false;
+        }
+    };
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mTaskManager.clear();
+        if (mServiceBound) {
+            unbindService(mConnection);
+        }
     }
 
     /**
@@ -95,7 +141,9 @@ public class MainActivity extends AppCompatActivity {
         private ListHolder(View aItemView) {
             super(aItemView);
             mImage = aItemView.findViewById(R.id.image);
-            mDescription = aItemView.findViewById(R.id.image_description);
+            if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+                mDescription = aItemView.findViewById(R.id.image_description);
+            }
             mContainer = aItemView.findViewById(R.id.image_container);
         }
 
@@ -105,8 +153,10 @@ public class MainActivity extends AppCompatActivity {
          * @param aImage image from list
          */
         void bindView(final SingleImage aImage) {
-            mDescription.setText(aImage.getName());
-            mImage.setImageDrawable(getResources().getDrawable(R.drawable.img, null));
+            if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+                mDescription.setText(aImage.getName());
+            }
+            mImage.setImageDrawable(getDrawable(R.drawable.img));
         }
 
         /**
@@ -141,11 +191,6 @@ public class MainActivity extends AppCompatActivity {
      * Adapter for recycler view. Allow to fill and update list.
      */
     private class ListAdapter extends RecyclerView.Adapter<ListHolder> {
-        @Override
-        public void onViewDetachedFromWindow(ListHolder aHolder) {
-            super.onViewDetachedFromWindow(aHolder);
-            aHolder.getTask().cancel();
-        }
 
         private ArrayList<SingleImage> mList;
 
@@ -187,29 +232,39 @@ public class MainActivity extends AppCompatActivity {
                     startActivity(intent);
                 }
             });
+            if (mServiceBound) {
+                BitmapFactory.Options options = new BitmapFactory.Options();
 
-            BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
-            bitmapOptions.inScaled = true;
-            bitmapOptions.inSampleSize = getMultiplier(image.getPath());
-            bitmapOptions.inTargetDensity = TARGET_DENSITY;
+                options.inTargetDensity = mTargetDensity;
+                options.inScaled = true;
+                options.inJustDecodeBounds = true;
+                BitmapFactory.decodeFile(image.getPath(), options);
+                options.inJustDecodeBounds = false;
+                options.inSampleSize = BitmapUtils.calculateInSampleSize(options, mTargetSize, mTargetSize);
 
-            Handler imageChanger = new Handler(new Handler.Callback() {
-                @Override
-                public boolean handleMessage(Message aMessage) {
-                    if (aMessage.obj != null) {
-                        aHolder.setThumbnail((Bitmap) aMessage.obj);
+                Handler imageChanger = new Handler(new Handler.Callback() {
+                    @Override
+                    public boolean handleMessage(Message aMessage) {
+                        if (aMessage.obj != null) {
+                            aHolder.setThumbnail((Bitmap) aMessage.obj);
+                        }
+                        return true;
                     }
-                    return true;
-                }
-            });
+                });
 
-            Message callback = Message.obtain();
-            callback.setTarget(imageChanger);
-
-            aHolder.setTask(new ThumbnailTask(image.getPath(), bitmapOptions, callback));
-            mTaskManager.addTask(aHolder.getTask());
+                Message callback = Message.obtain();
+                callback.setTarget(imageChanger);
+                ThumbnailTask thumbnailTask = new ThumbnailTask(image.getPath(), options, callback);
+                aHolder.setTask(thumbnailTask);
+                mTaskService.addTask(thumbnailTask);
+            }
         }
 
+        @Override
+        public void onViewDetachedFromWindow(ListHolder aHolder) {
+            super.onViewDetachedFromWindow(aHolder);
+            aHolder.getTask().cancel();
+        }
 
         @Override
         public long getItemId(int aIndex) {
@@ -221,19 +276,4 @@ public class MainActivity extends AppCompatActivity {
             return mList.size();
         }
     }
-
-    /**
-     * Get multiplier for image scaling.
-     *
-     * @param aPath path to target image.
-     *
-     * @return scale multiplier.
-     */
-    private int getMultiplier(String aPath) {
-        BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
-        bitmapOptions.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(aPath, bitmapOptions);
-        return bitmapOptions.outHeight / TARGET_WIDTH;
-    }
-
 }

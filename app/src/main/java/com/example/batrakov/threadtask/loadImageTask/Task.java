@@ -1,4 +1,4 @@
-package com.example.batrakov.threadtask.draft;
+package com.example.batrakov.threadtask.loadImageTask;
 
 /**
  * Describe task to load image.

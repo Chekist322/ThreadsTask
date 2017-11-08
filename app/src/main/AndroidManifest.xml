@@ -23,6 +23,10 @@
 
         </activity>
 
+        <service android:name=".ImageTaskService">
+
+        </service>
+
     </application>
 
 </manifest>

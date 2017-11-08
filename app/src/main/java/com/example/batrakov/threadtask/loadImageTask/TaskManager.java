@@ -1,13 +1,14 @@
-package com.example.batrakov.threadtask.draft;
+package com.example.batrakov.threadtask.loadImageTask;
 
 import java.io.Serializable;
 import java.util.LinkedList;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Manage incoming tasks to load images and execute threads for this tasks.
  */
 public class TaskManager implements Serializable {
-    private LinkedList<Task> mTaskQueue;
+    private ConcurrentLinkedQueue<Task> mTaskQueue;
     private LinkedList<Worker> mThreadsList;
 
     /**
@@ -16,7 +17,7 @@ public class TaskManager implements Serializable {
      * @param aAmountOfThreads required amount of worker threads.
      */
     public TaskManager(int aAmountOfThreads) {
-        mTaskQueue = new LinkedList<>();
+        mTaskQueue = new ConcurrentLinkedQueue<>();
         mThreadsList = new LinkedList<>();
         for (int i = 0; i < aAmountOfThreads; i++) {
             Worker task = new Worker(this);
@@ -36,7 +37,11 @@ public class TaskManager implements Serializable {
                 try {
                     wait();
                 } catch (InterruptedException aE) {
+                    Thread.currentThread().interrupt();
                     aE.printStackTrace();
+                    if (Thread.currentThread().isInterrupted()) {
+                        return null;
+                    }
                 }
             }
             return mTaskQueue.poll();

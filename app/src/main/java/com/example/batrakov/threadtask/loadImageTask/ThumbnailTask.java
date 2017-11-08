@@ -1,4 +1,4 @@
-package com.example.batrakov.threadtask.draft;
+package com.example.batrakov.threadtask.loadImageTask;
 
 import android.graphics.BitmapFactory;
 import android.os.Message;
@@ -13,9 +13,8 @@ public class ThumbnailTask extends Task {
     private final String mImagePath;
 
     /**
-     *
-     * @param aImagePath path to image.
-     * @param aBitmapOptions options for scaling.
+     * @param aImagePath       path to image.
+     * @param aBitmapOptions   options for scaling.
      * @param aCallbackMessage callback.
      */
     public ThumbnailTask(String aImagePath, BitmapFactory.Options aBitmapOptions, Message aCallbackMessage) {
@@ -26,9 +25,11 @@ public class ThumbnailTask extends Task {
 
     @Override
     public void process() {
-        mCallback.obj = BitmapFactory.decodeFile(mImagePath, mBitmapOptions);
         if (!isCanceled()) {
-            mCallback.sendToTarget();
+            mCallback.obj = BitmapFactory.decodeFile(mImagePath, mBitmapOptions);
+            if (!isCanceled()) {
+                mCallback.sendToTarget();
+            }
         }
     }
 }

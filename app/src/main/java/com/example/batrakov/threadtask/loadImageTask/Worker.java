@@ -1,4 +1,4 @@
-package com.example.batrakov.threadtask.draft;
+package com.example.batrakov.threadtask.loadImageTask;
 
 /**
  * Worker thread for loading image.
@@ -19,7 +19,7 @@ public class Worker extends Thread {
     public void run() {
         while (!isInterrupted()) {
             Task task = mTaskManager.getTask();
-            if (!isInterrupted() && !task.isCanceled()) {
+            if (task != null && !isInterrupted() && !task.isCanceled()) {
                 task.process();
             }
         }

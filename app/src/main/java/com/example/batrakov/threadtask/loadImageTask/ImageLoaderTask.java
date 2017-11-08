@@ -1,4 +1,4 @@
-package com.example.batrakov.threadtask.draft;
+package com.example.batrakov.threadtask.loadImageTask;
 
 import android.graphics.BitmapFactory;
 import android.os.Message;
@@ -26,6 +26,7 @@ public class ImageLoaderTask extends Task {
     public void process() {
         mCallback.obj = BitmapFactory.decodeFile(mImagePath);
         if (!isCanceled()) {
+            System.out.println("kek");
             mCallback.sendToTarget();
         }
     }
