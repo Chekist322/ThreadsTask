@@ -11,6 +11,7 @@ import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.WindowManager;
 import android.widget.ImageView;
 
 import com.example.batrakov.threadtask.loadImageTask.ImageLoaderTask;
@@ -29,6 +30,9 @@ public class BigPictureImageActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle aSavedInstanceState) {
         super.onCreate(aSavedInstanceState);
         setContentView(R.layout.big_picture_layout);
+
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         mImageView = findViewById(R.id.big_image);
 
