@@ -18,9 +18,13 @@ public class Worker extends Thread {
     @Override
     public void run() {
         while (!isInterrupted()) {
-            Task task = mTaskManager.getTask();
-            if (task != null && !isInterrupted() && !task.isCanceled()) {
-                task.process();
+            try {
+                Task task = mTaskManager.getTask();
+                if (task != null && !isInterrupted() && !task.isCanceled()) {
+                    task.process();
+                }
+            } catch (InterruptedException aE) {
+                aE.printStackTrace();
             }
         }
     }

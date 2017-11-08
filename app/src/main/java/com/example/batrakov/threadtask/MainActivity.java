@@ -25,6 +25,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.batrakov.threadtask.loadImageTask.ThumbnailTask;
 
@@ -96,16 +97,20 @@ public class MainActivity extends AppCompatActivity {
             ((SimpleItemAnimator) recyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
 
             File sImagesDirectory = new File(Environment.getExternalStorageDirectory() + "/images");
-            File[] listFiles = sImagesDirectory.listFiles();
-            for (File file : listFiles) {
-                SingleImage elementWithoutImage = new SingleImage();
-                elementWithoutImage.setName(file.getName());
-                elementWithoutImage.setPath(file.getPath());
-                imageArrayList.add(elementWithoutImage);
+            if (sImagesDirectory.listFiles() != null) {
+                File[] listFiles = sImagesDirectory.listFiles();
+                for (File file : listFiles) {
+                    SingleImage elementWithoutImage = new SingleImage();
+                    elementWithoutImage.setName(file.getName());
+                    elementWithoutImage.setPath(file.getPath());
+                    imageArrayList.add(elementWithoutImage);
+                }
+                adapter.replaceData(imageArrayList);
+            } else {
+                Toast.makeText(getBaseContext(), "There is no image directory...", Toast.LENGTH_LONG).show();
             }
-            adapter.replaceData(imageArrayList);
-
             Log.i(TAG, "onServiceConnected: ");
+
         }
 
         @Override

@@ -30,19 +30,13 @@ public class TaskManager implements Serializable {
      * Get task from queue.
      *
      * @return task from queue.
+     *
+     * @throws InterruptedException on thread interruption.
      */
-    Task getTask() {
+    Task getTask() throws InterruptedException {
         synchronized (this) {
             while (mTaskQueue.isEmpty()) {
-                try {
-                    wait();
-                } catch (InterruptedException aE) {
-                    Thread.currentThread().interrupt();
-                    aE.printStackTrace();
-                    if (Thread.currentThread().isInterrupted()) {
-                        return null;
-                    }
-                }
+                wait();
             }
             return mTaskQueue.poll();
         }
