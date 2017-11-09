@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -49,8 +48,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int LANDSCAPE_COL_SPAN = 3;
 
-    private int mTargetSize;
-    private int mTargetDensity;
+    private int mTargetThumbnailWidth;
+    private int mTargetScreenDensity;
     private boolean mServiceBound = false;
 
     private ImageTaskService mTaskService;
@@ -72,8 +71,8 @@ public class MainActivity extends AppCompatActivity {
         Intent startImageTaskServiceIntent = new Intent(this, ImageTaskService.class);
         bindService(startImageTaskServiceIntent, mConnection, BIND_AUTO_CREATE);
 
-        mTargetDensity = getResources().getDisplayMetrics().densityDpi;
-        mTargetSize = INCH * mTargetDensity;
+        mTargetScreenDensity = getResources().getDisplayMetrics().densityDpi;
+        mTargetThumbnailWidth = INCH * mTargetScreenDensity;
     }
 
     private ServiceConnection mConnection = new ServiceConnection() {
@@ -238,14 +237,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
             if (mServiceBound) {
-                BitmapFactory.Options options = new BitmapFactory.Options();
 
-                options.inTargetDensity = mTargetDensity;
-                options.inScaled = true;
-                options.inJustDecodeBounds = true;
-                BitmapFactory.decodeFile(image.getPath(), options);
-                options.inJustDecodeBounds = false;
-                options.inSampleSize = BitmapUtils.calculateInSampleSize(options, mTargetSize, mTargetSize);
 
                 Handler imageChanger = new Handler(new Handler.Callback() {
                     @Override
@@ -259,7 +251,8 @@ public class MainActivity extends AppCompatActivity {
 
                 Message callback = Message.obtain();
                 callback.setTarget(imageChanger);
-                ThumbnailTask thumbnailTask = new ThumbnailTask(image.getPath(), options, callback);
+                ThumbnailTask thumbnailTask = new ThumbnailTask(image.getPath(), callback,
+                        mTargetScreenDensity, mTargetThumbnailWidth);
                 aHolder.setTask(thumbnailTask);
                 mTaskService.addTask(thumbnailTask);
             }

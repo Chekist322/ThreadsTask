@@ -1,4 +1,4 @@
-package com.example.batrakov.threadtask;
+package com.example.batrakov.threadtask.loadImageTask;
 
 import android.graphics.BitmapFactory;
 
@@ -11,17 +11,14 @@ abstract class BitmapUtils {
      *
      * @param aOptions image options.
      * @param aReqWidth target width.
-     * @param aReqHeight target height.
      * @return calculated multiplier.
      */
-    static int calculateInSampleSize(BitmapFactory.Options aOptions, int aReqWidth, int aReqHeight) {
-        final int height = aOptions.outHeight;
+    static int calculateInSampleSize(BitmapFactory.Options aOptions, int aReqWidth) {
         final int width = aOptions.outWidth;
         int inSampleSize = 1;
 
-        if (height > aReqHeight || width > aReqWidth) {
-            while ((height / inSampleSize) >= aReqHeight
-                    && (width / inSampleSize) >= aReqWidth) {
+        if (width > aReqWidth) {
+            while ((width / inSampleSize) >= aReqWidth) {
                 inSampleSize *= 2;
             }
         }

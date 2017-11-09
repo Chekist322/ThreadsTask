@@ -9,24 +9,36 @@ import android.os.Message;
 public class ThumbnailTask extends Task {
 
     private final Message mCallback;
-    private final BitmapFactory.Options mBitmapOptions;
     private final String mImagePath;
+    private final int mTargetDensity;
+    private final int mTargetWidth;
 
     /**
      * @param aImagePath       path to image.
-     * @param aBitmapOptions   options for scaling.
      * @param aCallbackMessage callback.
+     * @param aDensity screen density.
+     * @param aImageWidth target image width in pixels.
      */
-    public ThumbnailTask(String aImagePath, BitmapFactory.Options aBitmapOptions, Message aCallbackMessage) {
+    public ThumbnailTask(String aImagePath, Message aCallbackMessage, int aDensity, int aImageWidth) {
         mCallback = aCallbackMessage;
-        mBitmapOptions = aBitmapOptions;
         mImagePath = aImagePath;
+        mTargetDensity = aDensity;
+        mTargetWidth = aImageWidth;
     }
 
     @Override
     public void process() {
         if (!isCanceled()) {
-            mCallback.obj = BitmapFactory.decodeFile(mImagePath, mBitmapOptions);
+            BitmapFactory.Options options = new BitmapFactory.Options();
+
+            options.inTargetDensity = mTargetDensity;
+            options.inScaled = true;
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeFile(mImagePath, options);
+            options.inJustDecodeBounds = false;
+            options.inSampleSize = BitmapUtils.calculateInSampleSize(options, mTargetWidth);
+
+            mCallback.obj = BitmapFactory.decodeFile(mImagePath, options);
             if (!isCanceled()) {
                 mCallback.sendToTarget();
             }
