@@ -3,8 +3,11 @@
           package="com.example.batrakov.threadtask">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="com.example.batrakov.imageloaderservice.permission.LOAD_IMAGE"/>
+
     <application
         android:allowBackup="true"
+        android:fullBackupContent="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -21,10 +24,6 @@
         <activity android:name=".BigPictureImageActivity" android:parentActivityName=".MainActivity">
 
         </activity>
-
-        <service android:name=".ImageTaskService">
-
-        </service>
 
     </application>
 

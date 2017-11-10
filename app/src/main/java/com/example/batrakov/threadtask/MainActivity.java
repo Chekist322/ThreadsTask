@@ -11,6 +11,8 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -25,8 +27,6 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.example.batrakov.threadtask.loadImageTask.ThumbnailTask;
 
 import java.io.File;
 import java.io.Serializable;
@@ -44,6 +44,18 @@ public class MainActivity extends AppCompatActivity {
      * Flag for string path to image.
      */
     public static final String IMAGE_PATH = "image path";
+
+    /**
+     * Flag for messenger sending to service.
+     */
+    public static final String TARGET_MSG = "target msg";
+
+    /**
+     * Flag for image from service.
+     */
+    public static final String IMAGE = "image";
+    private static final int MSG_ADD_THUMBNAIL_TASK = 0;
+
     private static final int PERMISSION_REQUEST_CODE = 0;
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int LANDSCAPE_COL_SPAN = 3;
@@ -52,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
     private int mTargetScreenDensity;
     private boolean mServiceBound = false;
 
-    private ImageTaskService mTaskService;
+    private Messenger mTaskServiceMessenger;
 
     @Override
     public void onRequestPermissionsResult(int aRequestCode,
@@ -68,18 +80,23 @@ public class MainActivity extends AppCompatActivity {
         ActivityCompat.requestPermissions(this,
                 new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
 
-        Intent startImageTaskServiceIntent = new Intent(this, ImageTaskService.class);
-        bindService(startImageTaskServiceIntent, mConnection, BIND_AUTO_CREATE);
-
         mTargetScreenDensity = getResources().getDisplayMetrics().densityDpi;
         mTargetThumbnailWidth = INCH * mTargetScreenDensity;
+
+        try {
+            Intent startAnotherService = new Intent(getString(R.string.service_action));
+            startAnotherService.setPackage(getString(R.string.service_package));
+            bindService(startAnotherService, mConnection, BIND_AUTO_CREATE);
+        } catch (SecurityException aE) {
+            aE.printStackTrace();
+            Toast.makeText(this, R.string.no_service_permission, Toast.LENGTH_LONG).show();
+        }
     }
 
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName aName, IBinder aBinder) {
-            ImageTaskService.ImageTaskBinder binder = (ImageTaskService.ImageTaskBinder) aBinder;
-            mTaskService = binder.getService();
+            mTaskServiceMessenger = new Messenger(aBinder);
             mServiceBound = true;
 
             ArrayList<SingleImage> imageArrayList = new ArrayList<>();
@@ -135,7 +152,9 @@ public class MainActivity extends AppCompatActivity {
         private ImageView mImage;
         private TextView mDescription;
         private View mContainer;
-        private ThumbnailTask mTask;
+        private Messenger mMessenger;
+        private String mPathToCurrentImage;
+        private Handler mHandler;
 
         /**
          * Constructor.
@@ -149,6 +168,18 @@ public class MainActivity extends AppCompatActivity {
                 mDescription = aItemView.findViewById(R.id.image_description);
             }
             mContainer = aItemView.findViewById(R.id.image_container);
+
+            mHandler = new Handler(new Handler.Callback() {
+                @Override
+                public boolean handleMessage(Message aMessage) {
+                    if (aMessage.getData() != null) {
+                        if (mPathToCurrentImage.equals(aMessage.getData().getString(IMAGE_PATH))) {
+                            setThumbnail((Bitmap) aMessage.getData().getParcelable(IMAGE));
+                        }
+                    }
+                    return true;
+                }
+            });
         }
 
         /**
@@ -161,6 +192,26 @@ public class MainActivity extends AppCompatActivity {
                 mDescription.setText(aImage.getName());
             }
             mImage.setImageDrawable(getDrawable(R.drawable.img));
+
+            if (mServiceBound) {
+                setMessenger(new Messenger(mHandler));
+
+                Bundle bundle = new Bundle();
+                bundle.putString(IMAGE_PATH, mPathToCurrentImage);
+                bundle.putParcelable(TARGET_MSG, getMessenger());
+
+                Message msgToService = Message.obtain();
+                msgToService.what = MSG_ADD_THUMBNAIL_TASK;
+                msgToService.arg1 = mTargetScreenDensity;
+                msgToService.arg2 = mTargetThumbnailWidth;
+                msgToService.setData(bundle);
+
+                try {
+                    mTaskServiceMessenger.send(msgToService);
+                } catch (RemoteException aE) {
+                    aE.printStackTrace();
+                }
+            }
         }
 
         /**
@@ -173,21 +224,30 @@ public class MainActivity extends AppCompatActivity {
         }
 
         /**
-         * Get task for current holder.
+         * Get holder messenger for sending it to Service.
          *
-         * @return current holder task.
+         * @return current holder messenger.
          */
-        ThumbnailTask getTask() {
-            return mTask;
+        Messenger getMessenger() {
+            return mMessenger;
         }
 
         /**
-         * Set task for current holder.
+         * Set holder messenger.
          *
-         * @param aTask target task.
+         * @param aMessenger target new messenger.
          */
-        void setTask(ThumbnailTask aTask) {
-            mTask = aTask;
+        void setMessenger(Messenger aMessenger) {
+            mMessenger = aMessenger;
+        }
+
+        /**
+         * Set path to new required image.
+         *
+         * @param aPathToCurrentImage path to new image.
+         */
+        void setPathToCurrentImage(String aPathToCurrentImage) {
+            mPathToCurrentImage = aPathToCurrentImage;
         }
     }
 
@@ -226,6 +286,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(final ListHolder aHolder, final int aPosition) {
             final SingleImage image = mList.get(aPosition);
+            aHolder.setPathToCurrentImage(image.getPath());
             aHolder.bindView(image);
 
             final Intent intent = new Intent(getBaseContext(), BigPictureImageActivity.class);
@@ -236,32 +297,11 @@ public class MainActivity extends AppCompatActivity {
                     startActivity(intent);
                 }
             });
-            if (mServiceBound) {
-
-
-                Handler imageChanger = new Handler(new Handler.Callback() {
-                    @Override
-                    public boolean handleMessage(Message aMessage) {
-                        if (aMessage.obj != null) {
-                            aHolder.setThumbnail((Bitmap) aMessage.obj);
-                        }
-                        return true;
-                    }
-                });
-
-                Message callback = Message.obtain();
-                callback.setTarget(imageChanger);
-                ThumbnailTask thumbnailTask = new ThumbnailTask(image.getPath(), callback,
-                        mTargetScreenDensity, mTargetThumbnailWidth);
-                aHolder.setTask(thumbnailTask);
-                mTaskService.addTask(thumbnailTask);
-            }
         }
 
         @Override
         public void onViewDetachedFromWindow(ListHolder aHolder) {
             super.onViewDetachedFromWindow(aHolder);
-            aHolder.getTask().cancel();
         }
 
         @Override
