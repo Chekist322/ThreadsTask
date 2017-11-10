@@ -172,9 +172,10 @@ public class MainActivity extends AppCompatActivity {
             mHandler = new Handler(new Handler.Callback() {
                 @Override
                 public boolean handleMessage(Message aMessage) {
-                    if (aMessage.getData() != null) {
-                        if (mPathToCurrentImage.equals(aMessage.getData().getString(IMAGE_PATH))) {
-                            setThumbnail((Bitmap) aMessage.getData().getParcelable(IMAGE));
+                    Bundle msgData = aMessage.getData();
+                    if (msgData != null) {
+                        if (mPathToCurrentImage.equals(msgData.getString(IMAGE_PATH))) {
+                            setThumbnail((Bitmap) msgData.getParcelable(IMAGE));
                         }
                     }
                     return true;
@@ -297,11 +298,6 @@ public class MainActivity extends AppCompatActivity {
                     startActivity(intent);
                 }
             });
-        }
-
-        @Override
-        public void onViewDetachedFromWindow(ListHolder aHolder) {
-            super.onViewDetachedFromWindow(aHolder);
         }
 
         @Override
