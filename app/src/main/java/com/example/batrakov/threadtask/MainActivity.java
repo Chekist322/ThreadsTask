@@ -83,8 +83,15 @@ public class MainActivity extends AppCompatActivity {
         mTargetScreenDensity = getResources().getDisplayMetrics().densityDpi;
         mTargetThumbnailWidth = INCH * mTargetScreenDensity;
 
+        connectToService();
+    }
+
+    /**
+     * Connect to image loader service.
+     */
+    private void connectToService() {
         try {
-            Intent startAnotherService = new Intent();
+            Intent startAnotherService = new Intent(getString(R.string.service_action));
             startAnotherService.setPackage(getString(R.string.service_package));
             bindService(startAnotherService, mConnection, BIND_AUTO_CREATE);
         } catch (SecurityException aE) {
