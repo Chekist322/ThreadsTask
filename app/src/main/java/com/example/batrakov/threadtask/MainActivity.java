@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
      */
     public static final String IMAGE = "image";
     private static final int MSG_ADD_THUMBNAIL_TASK = 0;
-    private static final int MSG_REQUEST_FILE_LIST = 2;
+    private static final int MSG_REQUEST_FILE_LIST_TASK = 2;
     private static final String FILES_PATH_LIST = "file path list";
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int LANDSCAPE_COL_SPAN = 3;
@@ -132,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
             bundle.putParcelable(TARGET_MSG, callbackForService);
 
             Message msg = Message.obtain();
-            msg.what = MSG_REQUEST_FILE_LIST;
+            msg.what = MSG_REQUEST_FILE_LIST_TASK;
             msg.setData(bundle);
 
             try {
