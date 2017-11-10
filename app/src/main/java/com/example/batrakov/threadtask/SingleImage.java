@@ -26,21 +26,14 @@ class SingleImage {
     }
 
     /**
-     * Set image name.
-     *
-     * @param aName target name.
-     */
-    void setName(String aName) {
-        mName = aName;
-    }
-
-    /**
      * Set path to image.
      *
      * @param aPath target path.
      */
     void setPath(String aPath) {
         mPath = aPath;
+        int index = mPath.lastIndexOf("/");
+        mName = mPath.substring(index + 1);
     }
 
     /**

@@ -2,7 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.example.batrakov.threadtask">
 
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="com.example.batrakov.imageloaderservice.permission.LOAD_IMAGE"/>
 
     <application

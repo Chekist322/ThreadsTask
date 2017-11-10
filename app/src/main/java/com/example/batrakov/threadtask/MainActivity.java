@@ -1,20 +1,16 @@
 package com.example.batrakov.threadtask;
 
-import android.Manifest;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -28,7 +24,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -55,8 +50,8 @@ public class MainActivity extends AppCompatActivity {
      */
     public static final String IMAGE = "image";
     private static final int MSG_ADD_THUMBNAIL_TASK = 0;
-
-    private static final int PERMISSION_REQUEST_CODE = 0;
+    private static final int MSG_REQUEST_FILE_LIST = 2;
+    private static final String FILES_PATH_LIST = "file path list";
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int LANDSCAPE_COL_SPAN = 3;
 
@@ -67,18 +62,9 @@ public class MainActivity extends AppCompatActivity {
     private Messenger mTaskServiceMessenger;
 
     @Override
-    public void onRequestPermissionsResult(int aRequestCode,
-                                           @NonNull String[] aPermissions, @NonNull int[] aGrantResults) {
-        super.onRequestPermissionsResult(aRequestCode, aPermissions, aGrantResults);
-    }
-
-    @Override
     protected void onCreate(Bundle aSavedInstanceState) {
         super.onCreate(aSavedInstanceState);
         setContentView(R.layout.activity_main);
-
-        ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
 
         mTargetScreenDensity = getResources().getDisplayMetrics().densityDpi;
         mTargetThumbnailWidth = INCH * mTargetScreenDensity;
@@ -106,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
             mTaskServiceMessenger = new Messenger(aBinder);
             mServiceBound = true;
 
-            ArrayList<SingleImage> imageArrayList = new ArrayList<>();
+            final ArrayList<SingleImage> imageArrayList = new ArrayList<>();
 
             RecyclerView recyclerView = findViewById(R.id.list);
 
@@ -115,23 +101,46 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(getBaseContext(), LANDSCAPE_COL_SPAN));
             }
-            ListAdapter adapter = new ListAdapter(imageArrayList);
+
+            final ListAdapter adapter = new ListAdapter(imageArrayList);
             recyclerView.setAdapter(adapter);
             ((SimpleItemAnimator) recyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
 
-            File sImagesDirectory = new File(Environment.getExternalStorageDirectory() + "/images");
-            if (sImagesDirectory.listFiles() != null) {
-                File[] listFiles = sImagesDirectory.listFiles();
-                for (File file : listFiles) {
-                    SingleImage elementWithoutImage = new SingleImage();
-                    elementWithoutImage.setName(file.getName());
-                    elementWithoutImage.setPath(file.getPath());
-                    imageArrayList.add(elementWithoutImage);
+            Handler setFileListHandler = new Handler(new Handler.Callback() {
+                @Override
+                public boolean handleMessage(Message aMsg) {
+                    Bundle msgData = aMsg.getData();
+                    ArrayList<String> filesPathList = msgData.getStringArrayList(FILES_PATH_LIST);
+                    if (filesPathList != null) {
+                        for (String path : filesPathList) {
+                            SingleImage elementWithoutImage = new SingleImage();
+                            elementWithoutImage.setPath(path);
+                            imageArrayList.add(elementWithoutImage);
+                        }
+                        adapter.replaceData(imageArrayList);
+
+                    } else {
+                        Toast.makeText(getBaseContext(), R.string.no_images,
+                                Toast.LENGTH_LONG).show();
+                    }
+                    return true;
                 }
-                adapter.replaceData(imageArrayList);
-            } else {
-                Toast.makeText(getBaseContext(), "There is no image directory...", Toast.LENGTH_LONG).show();
+            });
+            Messenger callbackForService = new Messenger(setFileListHandler);
+
+            Bundle bundle = new Bundle();
+            bundle.putParcelable(TARGET_MSG, callbackForService);
+
+            Message msg = Message.obtain();
+            msg.what = MSG_REQUEST_FILE_LIST;
+            msg.setData(bundle);
+
+            try {
+                mTaskServiceMessenger.send(msg);
+            } catch (RemoteException aE) {
+                aE.printStackTrace();
             }
+
             Log.i(TAG, "onServiceConnected: ");
 
         }
@@ -185,7 +194,7 @@ public class MainActivity extends AppCompatActivity {
                             setThumbnail((Bitmap) msgData.getParcelable(IMAGE));
                         }
                     }
-                    return true;
+                    return false;
                 }
             });
         }

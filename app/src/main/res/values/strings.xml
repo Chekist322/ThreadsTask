@@ -3,4 +3,5 @@
     <string name="no_service_permission">There is no permission for access the Service :(</string>
     <string name="service_action">com.example.batrakov.imageloaderservice.ACTION</string>
     <string name="service_package">com.example.batrakov.imageloaderservice</string>
+    <string name="no_images">There is no image directory…</string>
 </resources>
