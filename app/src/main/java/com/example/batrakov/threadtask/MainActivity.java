@@ -84,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
         mTargetThumbnailWidth = INCH * mTargetScreenDensity;
 
         try {
-            Intent startAnotherService = new Intent(getString(R.string.service_action));
+            Intent startAnotherService = new Intent();
             startAnotherService.setPackage(getString(R.string.service_package));
             bindService(startAnotherService, mConnection, BIND_AUTO_CREATE);
         } catch (SecurityException aE) {
