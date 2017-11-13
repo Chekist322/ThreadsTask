@@ -4,7 +4,6 @@ package com.example.batrakov.threadtask;
 // Declare any non-default types here with import statements
 
 import com.example.batrakov.threadtask.IServiceCallback;
-import com.example.batrakov.threadtask.IServiceRequest;
 
 /**
 *   Allow to send requests to bound service.
