@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.os.Messenger;
 import android.os.RemoteException;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
@@ -26,6 +25,7 @@ import android.widget.Toast;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Main application Activity.
@@ -41,16 +41,9 @@ public class MainActivity extends AppCompatActivity {
     public static final String IMAGE_PATH = "image path";
 
     /**
-     * Flag for messenger sending to service.
-     */
-    public static final String TARGET_MSG = "target msg";
-
-    /**
      * Flag for image from service.
      */
     public static final String IMAGE = "image";
-    private static final int MSG_ADD_THUMBNAIL_TASK = 0;
-    private static final int MSG_REQUEST_FILE_LIST_TASK = 2;
     private static final String FILES_PATH_LIST = "file path list";
     private static final String FILES_NAME_LIST = "file name list";
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -59,10 +52,11 @@ public class MainActivity extends AppCompatActivity {
     private int mTargetThumbnailWidth;
     private int mTargetScreenDensity;
     private boolean mServiceBound = false;
-    private ArrayList<String> mFilesPathList;
-    private ArrayList<String> mFilesNameList;
+    private ArrayList<String> mFilesPathList = new ArrayList<>();
+    private ArrayList<String> mFilesNameList = new ArrayList<>();
+    private ListAdapter mAdapter;
 
-    private Messenger mTaskServiceMessenger;
+    private IServiceRequest mTaskServiceRequestInterface;
 
     @Override
     protected void onCreate(Bundle aSavedInstanceState) {
@@ -72,6 +66,18 @@ public class MainActivity extends AppCompatActivity {
         mTargetScreenDensity = getResources().getDisplayMetrics().densityDpi;
         mTargetThumbnailWidth = INCH * mTargetScreenDensity;
 
+        RecyclerView recyclerView = findViewById(R.id.list);
+
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+            recyclerView.setLayoutManager(new LinearLayoutManager(getBaseContext()));
+        } else {
+            recyclerView.setLayoutManager(new GridLayoutManager(getBaseContext(), LANDSCAPE_COL_SPAN));
+        }
+
+        mAdapter = new ListAdapter(mFilesPathList, mFilesNameList);
+        recyclerView.setAdapter(mAdapter);
+        ((SimpleItemAnimator) recyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
+
         connectToService();
     }
 
@@ -80,9 +86,9 @@ public class MainActivity extends AppCompatActivity {
      */
     private void connectToService() {
         try {
-            Intent startAnotherService = new Intent(getString(R.string.service_action));
-            startAnotherService.setPackage(getString(R.string.service_package));
-            bindService(startAnotherService, mConnection, BIND_AUTO_CREATE);
+            Intent startLoaderService = new Intent(getString(R.string.service_action));
+            startLoaderService.setPackage(getString(R.string.service_package));
+            bindService(startLoaderService, mConnection, BIND_AUTO_CREATE);
         } catch (SecurityException aE) {
             aE.printStackTrace();
             Toast.makeText(this, R.string.no_service_permission, Toast.LENGTH_LONG).show();
@@ -92,32 +98,17 @@ public class MainActivity extends AppCompatActivity {
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName aName, IBinder aBinder) {
-            mTaskServiceMessenger = new Messenger(aBinder);
+            mTaskServiceRequestInterface = IServiceRequest.Stub.asInterface(aBinder);
             mServiceBound = true;
 
-            mFilesPathList = new ArrayList<>();
-            mFilesNameList = new ArrayList<>();
-
-            RecyclerView recyclerView = findViewById(R.id.list);
-
-            if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
-                recyclerView.setLayoutManager(new LinearLayoutManager(getBaseContext()));
-            } else {
-                recyclerView.setLayoutManager(new GridLayoutManager(getBaseContext(), LANDSCAPE_COL_SPAN));
-            }
-
-            final ListAdapter adapter = new ListAdapter(mFilesPathList, mFilesNameList);
-            recyclerView.setAdapter(adapter);
-            ((SimpleItemAnimator) recyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
-
-            Handler setFileListHandler = new Handler(new Handler.Callback() {
+            final Handler setFileListHandler = new Handler(new Handler.Callback() {
                 @Override
                 public boolean handleMessage(Message aMsg) {
                     Bundle msgData = aMsg.getData();
                     mFilesPathList = msgData.getStringArrayList(FILES_PATH_LIST);
                     mFilesNameList = msgData.getStringArrayList(FILES_NAME_LIST);
-                    if (mFilesPathList != null && mFilesNameList != null) {
-                        adapter.replaceData(mFilesPathList, mFilesNameList);
+                    if (mFilesPathList != null) {
+                        mAdapter.replaceData(mFilesPathList, mFilesNameList);
                     } else {
                         Toast.makeText(getBaseContext(), R.string.no_images,
                                 Toast.LENGTH_LONG).show();
@@ -125,17 +116,25 @@ public class MainActivity extends AppCompatActivity {
                     return true;
                 }
             });
-            Messenger callbackForService = new Messenger(setFileListHandler);
 
-            Bundle bundle = new Bundle();
-            bundle.putParcelable(TARGET_MSG, callbackForService);
+            IServiceCallback aidlCallback = new IServiceCallback.Stub() {
+                @Override
+                public void bitmapLoaded(String aPath, Bitmap aBitmap) throws RemoteException {
+                }
 
-            Message msg = Message.obtain();
-            msg.what = MSG_REQUEST_FILE_LIST_TASK;
-            msg.setData(bundle);
+                @Override
+                public void listsLoaded(List<String> aPathList, List<String> aNameList) throws RemoteException {
+                    Message message = Message.obtain();
+                    Bundle bundle = new Bundle();
+                    bundle.putStringArrayList(FILES_PATH_LIST, (ArrayList<String>) aPathList);
+                    bundle.putStringArrayList(FILES_NAME_LIST, (ArrayList<String>) aNameList);
+                    message.setData(bundle);
+                    setFileListHandler.sendMessage(message);
+                }
+            };
 
             try {
-                mTaskServiceMessenger.send(msg);
+                mTaskServiceRequestInterface.addListTask(aidlCallback);
             } catch (RemoteException aE) {
                 aE.printStackTrace();
             }
@@ -169,9 +168,9 @@ public class MainActivity extends AppCompatActivity {
         private ImageView mImage;
         private TextView mDescription;
         private View mContainer;
-        private Messenger mMessenger;
         private String mPathToCurrentImage;
         private Handler mHandler;
+        private IServiceCallback.Stub mAidlCallback;
 
         /**
          * Constructor.
@@ -198,6 +197,22 @@ public class MainActivity extends AppCompatActivity {
                     return false;
                 }
             });
+
+            mAidlCallback = new IServiceCallback.Stub() {
+                @Override
+                public void bitmapLoaded(String aPath, Bitmap aBitmap) throws RemoteException {
+                    Message message = Message.obtain();
+                    Bundle bundle = new Bundle();
+                    bundle.putParcelable(IMAGE, aBitmap);
+                    bundle.putString(IMAGE_PATH, aPath);
+                    message.setData(bundle);
+                    mHandler.sendMessage(message);
+                }
+
+                @Override
+                public void listsLoaded(List<String> aPathList, List<String> aNameList) throws RemoteException {
+                }
+            };
         }
 
         /**
@@ -213,20 +228,9 @@ public class MainActivity extends AppCompatActivity {
             mImage.setImageDrawable(getDrawable(R.drawable.img));
 
             if (mServiceBound) {
-                setMessenger(new Messenger(mHandler));
-
-                Bundle bundle = new Bundle();
-                bundle.putString(IMAGE_PATH, mPathToCurrentImage);
-                bundle.putParcelable(TARGET_MSG, getMessenger());
-
-                Message msgToService = Message.obtain();
-                msgToService.what = MSG_ADD_THUMBNAIL_TASK;
-                msgToService.arg1 = mTargetScreenDensity;
-                msgToService.arg2 = mTargetThumbnailWidth;
-                msgToService.setData(bundle);
-
                 try {
-                    mTaskServiceMessenger.send(msgToService);
+                    mTaskServiceRequestInterface.addThumbnailTask(mPathToCurrentImage,
+                            mAidlCallback, mTargetScreenDensity, mTargetThumbnailWidth);
                 } catch (RemoteException aE) {
                     aE.printStackTrace();
                 }
@@ -240,24 +244,6 @@ public class MainActivity extends AppCompatActivity {
          */
         void setThumbnail(Bitmap aThumbnail) {
             mImage.setImageBitmap(aThumbnail);
-        }
-
-        /**
-         * Get holder messenger for sending it to Service.
-         *
-         * @return current holder messenger.
-         */
-        Messenger getMessenger() {
-            return mMessenger;
-        }
-
-        /**
-         * Set holder messenger.
-         *
-         * @param aMessenger target new messenger.
-         */
-        void setMessenger(Messenger aMessenger) {
-            mMessenger = aMessenger;
         }
 
         /**

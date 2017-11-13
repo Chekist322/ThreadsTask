@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.os.Messenger;
 import android.os.RemoteException;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -16,13 +15,16 @@ import android.util.Log;
 import android.view.WindowManager;
 import android.widget.ImageView;
 
+import java.util.List;
+
+import static com.example.batrakov.threadtask.MainActivity.IMAGE;
+
 /**
  * Represent requested image in full size.
  */
 public class BigPictureImageActivity extends AppCompatActivity {
 
     private static final String TAG = BigPictureImageActivity.class.getSimpleName();
-    private static final int MSG_ADD_BIG_TASK = 1;
 
     private ImageView mImageView;
     private boolean mServiceBound;
@@ -37,44 +39,50 @@ public class BigPictureImageActivity extends AppCompatActivity {
 
         mImageView = findViewById(R.id.big_image);
 
-        Intent startAnotherService = new Intent("com.example.batrakov.imageloaderservice.ACTION");
-        startAnotherService.setPackage("com.example.batrakov.imageloaderservice");
-        bindService(startAnotherService, mConnection, BIND_AUTO_CREATE);
+
+        Intent startLoaderService = new Intent(getString(R.string.service_action));
+        startLoaderService.setPackage(getString(R.string.service_package));
+        bindService(startLoaderService, mConnection, BIND_AUTO_CREATE);
     }
 
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName aName, IBinder aBinder) {
             Log.i(TAG, "onServiceConnected: ");
-            Messenger taskServiceMessenger = new Messenger(aBinder);
+            IServiceRequest taskServiceRequestInterface = IServiceRequest.Stub.asInterface(aBinder);
             mServiceBound = true;
 
-            if (getIntent().hasExtra(MainActivity.IMAGE_PATH)) {
-                Handler imageChanger = new Handler(new Handler.Callback() {
-                    @Override
-                    public boolean handleMessage(Message aMsg) {
-                        if (aMsg.getData() != null) {
-                            mImageView.setImageBitmap((Bitmap) aMsg.getData().getParcelable(MainActivity.IMAGE));
-                        }
-                        return false;
+            final Handler handler = new Handler(new Handler.Callback() {
+                @Override
+                public boolean handleMessage(Message aMessage) {
+                    System.out.println("kek");
+                    Bundle msgData = aMessage.getData();
+                    if (msgData != null) {
+                        mImageView.setImageBitmap((Bitmap) msgData.getParcelable(IMAGE));
                     }
-                });
-
-                Messenger messenger = new Messenger(imageChanger);
-
-                Bundle bundle = new Bundle();
-                bundle.putString(MainActivity.IMAGE_PATH, getIntent().getStringExtra(MainActivity.IMAGE_PATH));
-                bundle.putParcelable(MainActivity.TARGET_MSG, messenger);
-
-                Message msgToService = Message.obtain();
-                msgToService.what = MSG_ADD_BIG_TASK;
-                msgToService.setData(bundle);
-
-                try {
-                    taskServiceMessenger.send(msgToService);
-                } catch (RemoteException aE) {
-                    aE.printStackTrace();
+                    return false;
                 }
+            });
+
+            IServiceCallback aidlCallback = new IServiceCallback.Stub() {
+                @Override
+                public void bitmapLoaded(String aPath, Bitmap aBitmap) throws RemoteException {
+                    Message message = Message.obtain();
+                    Bundle bundle = new Bundle();
+                    bundle.putParcelable(IMAGE, aBitmap);
+                    message.setData(bundle);
+                    handler.sendMessage(message);
+                }
+
+                @Override
+                public void listsLoaded(List<String> aPathList, List<String> aNameList) throws RemoteException {
+                }
+            };
+
+            try {
+                taskServiceRequestInterface.addListTask(aidlCallback);
+            } catch (RemoteException aE) {
+                aE.printStackTrace();
             }
         }
 
