@@ -12,15 +12,14 @@ interface IServiceCallback {
     *   Send message bitmap was loaded.
     *
     *   @param aPath contain path to loaded image.
-    *   @param aBitmap loaded image.
+    *   @param aName loaded image.
     */
-    oneway void bitmapLoaded(in String aPath, in Bitmap aBitmap);
+    oneway void bitmapLoaded(in String aName, in Bitmap aBitmap);
 
     /**
     *   Send message Lists were leaded.
     *
-    *   @param aPathList contains paths to images.
     *   @param aNameList contains images's names.
     */
-    oneway void listsLoaded(in List<String> aPathList, in List<String> aNameList);
+    oneway void listsLoaded(in List<String> aNameList);
 }

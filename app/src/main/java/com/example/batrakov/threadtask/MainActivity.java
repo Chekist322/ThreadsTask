@@ -44,15 +44,14 @@ public class MainActivity extends AppCompatActivity {
      * Flag for image from service.
      */
     public static final String IMAGE = "image";
-    private static final String FILES_PATH_LIST = "file path list";
     private static final String FILES_NAME_LIST = "file name list";
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int LANDSCAPE_COL_SPAN = 3;
+    private static final String PATH_TO_IMAGES = "/storage/emulated/0/images/";
 
     private int mTargetThumbnailWidth;
     private int mTargetScreenDensity;
     private boolean mServiceBound = false;
-    private ArrayList<String> mFilesPathList = new ArrayList<>();
     private ArrayList<String> mFilesNameList = new ArrayList<>();
     private ListAdapter mAdapter;
 
@@ -74,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
             recyclerView.setLayoutManager(new GridLayoutManager(getBaseContext(), LANDSCAPE_COL_SPAN));
         }
 
-        mAdapter = new ListAdapter(mFilesPathList, mFilesNameList);
+        mAdapter = new ListAdapter(mFilesNameList);
         recyclerView.setAdapter(mAdapter);
         ((SimpleItemAnimator) recyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
 
@@ -105,10 +104,9 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public boolean handleMessage(Message aMsg) {
                     Bundle msgData = aMsg.getData();
-                    mFilesPathList = msgData.getStringArrayList(FILES_PATH_LIST);
                     mFilesNameList = msgData.getStringArrayList(FILES_NAME_LIST);
-                    if (mFilesPathList != null) {
-                        mAdapter.replaceData(mFilesPathList, mFilesNameList);
+                    if (mFilesNameList != null) {
+                        mAdapter.replaceData(mFilesNameList);
                     } else {
                         Toast.makeText(getBaseContext(), R.string.no_images,
                                 Toast.LENGTH_LONG).show();
@@ -123,10 +121,9 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void listsLoaded(List<String> aPathList, List<String> aNameList) throws RemoteException {
+                public void listsLoaded(List<String> aNameList) throws RemoteException {
                     Message message = Message.obtain();
                     Bundle bundle = new Bundle();
-                    bundle.putStringArrayList(FILES_PATH_LIST, (ArrayList<String>) aPathList);
                     bundle.putStringArrayList(FILES_NAME_LIST, (ArrayList<String>) aNameList);
                     message.setData(bundle);
                     setFileListHandler.sendMessage(message);
@@ -210,7 +207,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void listsLoaded(List<String> aPathList, List<String> aNameList) throws RemoteException {
+                public void listsLoaded(List<String> aNameList) throws RemoteException {
                 }
             };
         }
@@ -261,28 +258,23 @@ public class MainActivity extends AppCompatActivity {
      */
     private class ListAdapter extends RecyclerView.Adapter<ListHolder> {
 
-        private ArrayList<String> mPathList;
         private ArrayList<String> mNameList;
 
         /**
          * Constructor.
          *
-         * @param aPathList target list for fill.
          * @param aNameList target name list.
          */
-        ListAdapter(ArrayList<String> aPathList, ArrayList<String> aNameList) {
-            mPathList = aPathList;
+        ListAdapter(ArrayList<String> aNameList) {
             mNameList = aNameList;
         }
 
         /**
          * List updating.
          *
-         * @param aPathList target list for fill.
          * @param aNameList target name list.
          */
-        void replaceData(ArrayList<String> aPathList, ArrayList<String> aNameList) {
-            mPathList = aPathList;
+        void replaceData(ArrayList<String> aNameList) {
             mNameList = aNameList;
             notifyDataSetChanged();
         }
@@ -295,16 +287,15 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(final ListHolder aHolder, final int aPosition) {
-            final String path = mPathList.get(aPosition);
             final String name = mNameList.get(aPosition);
-            aHolder.setPathToCurrentImage(path);
+            aHolder.setPathToCurrentImage(PATH_TO_IMAGES + name);
             aHolder.bindView(name);
 
             final Intent intent = new Intent(getBaseContext(), BigPictureImageActivity.class);
             aHolder.mContainer.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View aView) {
-                    intent.putExtra(IMAGE_PATH, path);
+                    intent.putExtra(IMAGE_PATH, name);
                     startActivity(intent);
                 }
             });
@@ -317,7 +308,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public int getItemCount() {
-            return mPathList.size();
+            return mNameList.size();
         }
     }
 }

@@ -55,7 +55,7 @@ public class BigPictureImageActivity extends AppCompatActivity {
             final Handler handler = new Handler(new Handler.Callback() {
                 @Override
                 public boolean handleMessage(Message aMessage) {
-                    System.out.println("kek");
+                    Log.i(TAG, "handleMessage: ");
                     Bundle msgData = aMessage.getData();
                     if (msgData != null) {
                         mImageView.setImageBitmap((Bitmap) msgData.getParcelable(IMAGE));
@@ -67,6 +67,7 @@ public class BigPictureImageActivity extends AppCompatActivity {
             IServiceCallback aidlCallback = new IServiceCallback.Stub() {
                 @Override
                 public void bitmapLoaded(String aPath, Bitmap aBitmap) throws RemoteException {
+                    Log.i(TAG, "bitmapLoaded: ");
                     Message message = Message.obtain();
                     Bundle bundle = new Bundle();
                     bundle.putParcelable(IMAGE, aBitmap);
@@ -75,7 +76,7 @@ public class BigPictureImageActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void listsLoaded(List<String> aPathList, List<String> aNameList) throws RemoteException {
+                public void listsLoaded(List<String> aNameList) throws RemoteException {
                 }
             };
 
