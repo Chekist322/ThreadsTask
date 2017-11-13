@@ -153,10 +153,12 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
+        Log.i(TAG, "onDestroy: ");
         if (mServiceBound) {
+            Log.i(TAG, "onDestroy: ");
             unbindService(mConnection);
         }
+        super.onDestroy();
     }
 
     /**
@@ -204,7 +206,8 @@ public class MainActivity extends AppCompatActivity {
          * @param aName image name from list
          */
         void bindView(String aName) {
-            if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+            if (mDescription != null
+                    && getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
                 mDescription.setText(aName);
             }
             mImage.setImageDrawable(getDrawable(R.drawable.img));
