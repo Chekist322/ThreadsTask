@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
         mTargetScreenDensity = getResources().getDisplayMetrics().densityDpi;
         mTargetThumbnailWidth = INCH * mTargetScreenDensity;
 
-        RecyclerView recyclerView = findViewById(R.id.list);
+        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.list);
 
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
             recyclerView.setLayoutManager(new LinearLayoutManager(getBaseContext()));

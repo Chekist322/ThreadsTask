@@ -38,7 +38,7 @@ public class BigPictureImageActivity extends AppCompatActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        mImageView = findViewById(R.id.big_image);
+        mImageView = (ImageView) findViewById(R.id.big_image);
 
 
         Intent startLoaderService = new Intent(getString(R.string.service_action));
