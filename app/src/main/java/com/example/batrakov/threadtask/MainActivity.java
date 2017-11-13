@@ -295,7 +295,7 @@ public class MainActivity extends AppCompatActivity {
             aHolder.mContainer.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View aView) {
-                    intent.putExtra(IMAGE_PATH, name);
+                    intent.putExtra(IMAGE_PATH, aHolder.mPathToCurrentImage);
                     startActivity(intent);
                 }
             });

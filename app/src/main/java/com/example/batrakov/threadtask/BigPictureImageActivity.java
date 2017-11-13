@@ -18,6 +18,7 @@ import android.widget.ImageView;
 import java.util.List;
 
 import static com.example.batrakov.threadtask.MainActivity.IMAGE;
+import static com.example.batrakov.threadtask.MainActivity.IMAGE_PATH;
 
 /**
  * Represent requested image in full size.
@@ -81,7 +82,7 @@ public class BigPictureImageActivity extends AppCompatActivity {
             };
 
             try {
-                taskServiceRequestInterface.addListTask(aidlCallback);
+                taskServiceRequestInterface.addBigTask(getIntent().getStringExtra(IMAGE_PATH), aidlCallback);
             } catch (RemoteException aE) {
                 aE.printStackTrace();
             }
