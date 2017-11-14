@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Flag for string path to image.
      */
-    public static final String IMAGE_PATH = "image path";
+    public static final String IMAGE_NAME = "image path";
 
     /**
      * Flag for image from service.
@@ -47,7 +47,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String FILES_NAME_LIST = "file name list";
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int LANDSCAPE_COL_SPAN = 3;
-    private static final String PATH_TO_IMAGES = "/storage/emulated/0/images/";
 
     private int mTargetThumbnailWidth;
     private int mTargetScreenDensity;
@@ -149,9 +148,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        Log.i(TAG, "onDestroy: ");
         if (mServiceBound) {
-            Log.i(TAG, "onDestroy: ");
             unbindService(mConnection);
         }
         super.onDestroy();
@@ -165,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
         private ImageView mImage;
         private TextView mDescription;
         private View mContainer;
-        private String mPathToCurrentImage;
+        private String mCurrentImageName;
         private Handler mHandler;
         private IServiceCallback.Stub mAidlCallback;
 
@@ -187,7 +184,7 @@ public class MainActivity extends AppCompatActivity {
                 public boolean handleMessage(Message aMessage) {
                     Bundle msgData = aMessage.getData();
                     if (msgData != null) {
-                        if (mPathToCurrentImage.equals(msgData.getString(IMAGE_PATH))) {
+                        if (mCurrentImageName.equals(msgData.getString(IMAGE_NAME))) {
                             setThumbnail((Bitmap) msgData.getParcelable(IMAGE));
                         }
                     }
@@ -197,11 +194,11 @@ public class MainActivity extends AppCompatActivity {
 
             mAidlCallback = new IServiceCallback.Stub() {
                 @Override
-                public void bitmapLoaded(String aPath, Bitmap aBitmap) throws RemoteException {
+                public void bitmapLoaded(String aName, Bitmap aBitmap) throws RemoteException {
                     Message message = Message.obtain();
                     Bundle bundle = new Bundle();
                     bundle.putParcelable(IMAGE, aBitmap);
-                    bundle.putString(IMAGE_PATH, aPath);
+                    bundle.putString(IMAGE_NAME, aName);
                     message.setData(bundle);
                     mHandler.sendMessage(message);
                 }
@@ -226,7 +223,7 @@ public class MainActivity extends AppCompatActivity {
 
             if (mServiceBound) {
                 try {
-                    mTaskServiceRequestInterface.addThumbnailTask(mPathToCurrentImage,
+                    mTaskServiceRequestInterface.addThumbnailTask(mCurrentImageName,
                             mAidlCallback, mTargetScreenDensity, mTargetThumbnailWidth);
                 } catch (RemoteException aE) {
                     aE.printStackTrace();
@@ -246,10 +243,10 @@ public class MainActivity extends AppCompatActivity {
         /**
          * Set path to new required image.
          *
-         * @param aPathToCurrentImage path to new image.
+         * @param aCurrentImageName path to new image.
          */
-        void setPathToCurrentImage(String aPathToCurrentImage) {
-            mPathToCurrentImage = aPathToCurrentImage;
+        void setCurrentImageName(String aCurrentImageName) {
+            mCurrentImageName = aCurrentImageName;
         }
     }
 
@@ -288,14 +285,14 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(final ListHolder aHolder, final int aPosition) {
             final String name = mNameList.get(aPosition);
-            aHolder.setPathToCurrentImage(PATH_TO_IMAGES + name);
+            aHolder.setCurrentImageName(name);
             aHolder.bindView(name);
 
             final Intent intent = new Intent(getBaseContext(), BigPictureImageActivity.class);
             aHolder.mContainer.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View aView) {
-                    intent.putExtra(IMAGE_PATH, aHolder.mPathToCurrentImage);
+                    intent.putExtra(IMAGE_NAME, aHolder.mCurrentImageName);
                     startActivity(intent);
                 }
             });

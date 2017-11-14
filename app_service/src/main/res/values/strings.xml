@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">ImageLoaderService</string>
+    <string name="load_image">Load image</string>
+    <string name="desc_load_image">Allow to load and format images in service</string>
+    <string name="permission">android.permission.READ_EXTERNAL_STORAGE</string>
+
+</resources>
