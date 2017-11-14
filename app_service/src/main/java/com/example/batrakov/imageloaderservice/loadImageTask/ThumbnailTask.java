@@ -27,8 +27,10 @@ public class ThumbnailTask extends Task {
      * @param aCallbackMessage  callback.
      * @param aDensity          screen density.
      * @param aTargetImageWidth target image width in pixels.
+     * @param aTaskManager      task manager that control current task.
      */
-    public ThumbnailTask(Integer aHolderID, String aImageName, IServiceCallback aCallbackMessage, int aDensity, int aTargetImageWidth, TaskManager aTaskManager) {
+    public ThumbnailTask(Integer aHolderID, String aImageName, IServiceCallback aCallbackMessage,
+                         int aDensity, int aTargetImageWidth, TaskManager aTaskManager) {
         mHolderID = aHolderID;
         mCallback = aCallbackMessage;
         mImageName = aImageName;
