@@ -13,20 +13,20 @@ interface IServiceRequest {
     /**
     *   Add new task to load thumbnail to queue.
     *
-    *   @param aPath path to target image.
+    *   @param aName path to target image.
     *   @param aCallback allow to get result from service.
     *   @param aDensity target thumbnail density.
     *   @param aWidth target thumbnail width.
     */
-    oneway void addThumbnailTask(String aPath, IServiceCallback aCallback, int aDensity, int aWidth);
+    oneway void addThumbnailTask(in String aName,in IServiceCallback aCallback, int aDensity, int aWidth);
 
     /**
     *   Add new task to load image to queue.
     *
-    *   @param aPath path to target image.
+    *   @param aName path to target image.
     *   @param aCallback allow to get result from service.
     */
-    oneway void addBigTask(String aPath, IServiceCallback aCallback);
+    oneway void addBigTask(in String aName,in IServiceCallback aCallback);
 
     /**
     *   Add new task to load list of images to queue.

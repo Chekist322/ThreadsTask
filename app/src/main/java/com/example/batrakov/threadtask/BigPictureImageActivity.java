@@ -67,7 +67,7 @@ public class BigPictureImageActivity extends AppCompatActivity {
 
             IServiceCallback aidlCallback = new IServiceCallback.Stub() {
                 @Override
-                public void bitmapLoaded(String aPath, Bitmap aBitmap) throws RemoteException {
+                public void bitmapLoaded(String aName, Bitmap aBitmap) throws RemoteException {
                     Log.i(TAG, "bitmapLoaded: ");
                     Message message = Message.obtain();
                     Bundle bundle = new Bundle();

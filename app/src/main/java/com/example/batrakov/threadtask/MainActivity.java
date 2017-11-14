@@ -36,9 +36,9 @@ public class MainActivity extends AppCompatActivity {
     private static final int INCH = 1;
 
     /**
-     * Flag for string path to image.
+     * Flag for string image name.
      */
-    public static final String IMAGE_NAME = "image path";
+    public static final String IMAGE_NAME = "image name";
 
     /**
      * Flag for image from service.
@@ -116,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
 
             IServiceCallback aidlCallback = new IServiceCallback.Stub() {
                 @Override
-                public void bitmapLoaded(String aPath, Bitmap aBitmap) throws RemoteException {
+                public void bitmapLoaded(String aName, Bitmap aBitmap) throws RemoteException {
                 }
 
                 @Override
@@ -241,9 +241,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         /**
-         * Set path to new required image.
+         * Set required image name.
          *
-         * @param aCurrentImageName path to new image.
+         * @param aCurrentImageName incoming image name.
          */
         void setCurrentImageName(String aCurrentImageName) {
             mCurrentImageName = aCurrentImageName;
