@@ -9,8 +9,9 @@ abstract class BitmapUtils {
     /**
      * Calculate scale multiplier for thumbnail scaling.
      *
-     * @param aOptions image options.
+     * @param aOptions  image options.
      * @param aReqWidth target width.
+     *
      * @return calculated multiplier.
      */
     static int calculateInSampleSize(BitmapFactory.Options aOptions, int aReqWidth) {

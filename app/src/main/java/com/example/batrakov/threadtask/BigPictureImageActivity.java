@@ -27,7 +27,7 @@ public class BigPictureImageActivity extends AppCompatActivity {
 
     private static final String TAG = BigPictureImageActivity.class.getSimpleName();
 
-    private ImageView mImageView;
+    private ImageView mBigImageView;
     private boolean mServiceBound;
 
     @Override
@@ -38,34 +38,34 @@ public class BigPictureImageActivity extends AppCompatActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        mImageView = (ImageView) findViewById(R.id.big_image);
+        mBigImageView = (ImageView) findViewById(R.id.big_image);
 
 
         Intent startLoaderService = new Intent(getString(R.string.service_action));
         startLoaderService.setPackage(getString(R.string.service_package));
-        bindService(startLoaderService, mConnection, BIND_AUTO_CREATE);
+        bindService(startLoaderService, mLoaderServiceConnection, BIND_AUTO_CREATE);
     }
 
-    private ServiceConnection mConnection = new ServiceConnection() {
+    private ServiceConnection mLoaderServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName aName, IBinder aBinder) {
             Log.i(TAG, "onServiceConnected: ");
             IServiceRequest taskServiceRequestInterface = IServiceRequest.Stub.asInterface(aBinder);
             mServiceBound = true;
 
-            final Handler handler = new Handler(new Handler.Callback() {
+            final Handler serviceCallbackHandler = new Handler(new Handler.Callback() {
                 @Override
                 public boolean handleMessage(Message aMessage) {
                     Log.i(TAG, "handleMessage: ");
                     Bundle msgData = aMessage.getData();
                     if (msgData != null) {
-                        mImageView.setImageBitmap((Bitmap) msgData.getParcelable(IMAGE));
+                        mBigImageView.setImageBitmap((Bitmap) msgData.getParcelable(IMAGE));
                     }
                     return false;
                 }
             });
 
-            IServiceCallback aidlCallback = new IServiceCallback.Stub() {
+            IServiceCallback aidlServiceCallback = new IServiceCallback.Stub() {
                 @Override
                 public void bitmapLoaded(String aName, Bitmap aBitmap) throws RemoteException {
                     Log.i(TAG, "bitmapLoaded: ");
@@ -73,7 +73,7 @@ public class BigPictureImageActivity extends AppCompatActivity {
                     Bundle bundle = new Bundle();
                     bundle.putParcelable(IMAGE, aBitmap);
                     message.setData(bundle);
-                    handler.sendMessage(message);
+                    serviceCallbackHandler.sendMessage(message);
                 }
 
                 @Override
@@ -82,7 +82,7 @@ public class BigPictureImageActivity extends AppCompatActivity {
             };
 
             try {
-                taskServiceRequestInterface.addBigTask(getIntent().getStringExtra(IMAGE_NAME), aidlCallback);
+                taskServiceRequestInterface.addBigTask(getIntent().getStringExtra(IMAGE_NAME), aidlServiceCallback);
             } catch (RemoteException aE) {
                 aE.printStackTrace();
             }
@@ -98,7 +98,7 @@ public class BigPictureImageActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         if (mServiceBound) {
-            unbindService(mConnection);
+            unbindService(mLoaderServiceConnection);
         }
         super.onDestroy();
     }

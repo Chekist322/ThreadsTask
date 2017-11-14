@@ -24,8 +24,8 @@ public class Worker extends Thread {
                     task.process();
                 }
             } catch (InterruptedException aE) {
-                aE.printStackTrace();
                 Thread.currentThread().interrupt();
+                aE.printStackTrace();
             }
         }
     }

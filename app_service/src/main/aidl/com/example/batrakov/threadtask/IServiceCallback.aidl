@@ -1,7 +1,4 @@
-// ServiceAidlInteface.aidl
 package com.example.batrakov.threadtask;
-
-// Declare any non-default types here with import statements
 
 /**
 *   Provide callback from Service to main app.

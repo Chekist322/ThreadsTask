@@ -20,41 +20,48 @@ import com.example.batrakov.threadtask.IServiceRequest;
  */
 public class ImageTaskService extends Service {
 
+    /**
+     * Path to images on external storage.
+     */
+    public static final String PATH_TO_IMAGES = "/storage/emulated/0/images/";
+
+    /**
+     * Id for request to load big image.
+     */
+    public static final int BIG_TASK_ID = -1;
+
+    /**
+     * Id for request to load list of images.
+     */
+    public static final int LIST_LOADING_TASK_ID = -2;
+
+
     private static final String TAG = ImageTaskService.class.getSimpleName();
 
     private static final int AMOUNT_OF_THREADS = 4;
 
     private final TaskManager mTaskManager = new TaskManager(AMOUNT_OF_THREADS);
 
-    /**
-     * Path to images on external storage.
-     */
-    public static final String PATH_TO_IMAGES = "/storage/emulated/0/images/";
-
     private final IServiceRequest.Stub mCallbackInterface = new IServiceRequest.Stub() {
 
 
         @Override
-        public void addThumbnailTask(String aName, IServiceCallback aCallback,
+        public void addThumbnailTask(int aHolderID, String aName, IServiceCallback aCallback,
                                      int aDensity, int aWidth) throws RemoteException {
-            mTaskManager.addTask(new ThumbnailTask(aName, aCallback, aDensity, aWidth));
+            mTaskManager.addTask(aHolderID, new ThumbnailTask(aHolderID,
+                    aName, aCallback, aDensity, aWidth, mTaskManager));
         }
 
         @Override
         public void addBigTask(String aPath, IServiceCallback aCallback) throws RemoteException {
-            mTaskManager.addTask(new ImageLoaderTask(aPath, aCallback));
+            mTaskManager.addTask(BIG_TASK_ID, new ImageLoaderTask(aPath, aCallback));
         }
 
         @Override
         public void addListTask(IServiceCallback aCallback) throws RemoteException {
-            mTaskManager.addTask(new TaskGetFileList(aCallback));
+            mTaskManager.addTask(LIST_LOADING_TASK_ID, new TaskGetFileList(aCallback));
         }
     };
-
-    @Override
-    public int onStartCommand(Intent aIntent, int aFlags, int aStartId) {
-        return super.onStartCommand(aIntent, aFlags, aStartId);
-    }
 
     @Nullable
     @Override
@@ -64,21 +71,9 @@ public class ImageTaskService extends Service {
     }
 
     @Override
-    public void onTaskRemoved(Intent aRootIntent) {
-        Log.i(TAG, "onTaskRemoved: ");
-        super.onTaskRemoved(aRootIntent);
-    }
-
-    @Override
-    public boolean onUnbind(Intent aIntent) {
-        Log.i(TAG, "onUnbind: ");
-        return super.onUnbind(aIntent);
-    }
-
-    @Override
     public void onDestroy() {
         Log.i(TAG, "onDestroy: ");
-        super.onDestroy();
         mTaskManager.clear();
+        super.onDestroy();
     }
 }

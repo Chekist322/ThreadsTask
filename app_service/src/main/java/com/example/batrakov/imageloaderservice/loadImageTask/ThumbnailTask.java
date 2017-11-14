@@ -15,40 +15,58 @@ public class ThumbnailTask extends Task {
     private final IServiceCallback mCallback;
     private final String mImageName;
     private final int mTargetDensity;
-    private final int mTargetWidth;
+    private final int mTargetImageWidth;
+    private final Integer mHolderID;
+    private final TaskManager mTaskManager;
 
     /**
-     * @param aImageName       image name.
-     * @param aCallbackMessage callback.
-     * @param aDensity         screen density.
-     * @param aImageWidth      target image width in pixels.
+     * Constructor.
+     *
+     * @param aHolderID         target holder id.
+     * @param aImageName        image name.
+     * @param aCallbackMessage  callback.
+     * @param aDensity          screen density.
+     * @param aTargetImageWidth target image width in pixels.
      */
-    public ThumbnailTask(String aImageName, IServiceCallback aCallbackMessage, int aDensity, int aImageWidth) {
+    public ThumbnailTask(Integer aHolderID, String aImageName, IServiceCallback aCallbackMessage, int aDensity, int aTargetImageWidth, TaskManager aTaskManager) {
+        mHolderID = aHolderID;
         mCallback = aCallbackMessage;
         mImageName = aImageName;
         mTargetDensity = aDensity;
-        mTargetWidth = aImageWidth;
+        mTargetImageWidth = aTargetImageWidth;
+        mTaskManager = aTaskManager;
     }
 
     @Override
     public void process() {
         BitmapFactory.Options options = new BitmapFactory.Options();
 
-        String path = ImageTaskService.PATH_TO_IMAGES + mImageName;
+        String pathToImage = ImageTaskService.PATH_TO_IMAGES + mImageName;
 
-                options.inTargetDensity = mTargetDensity;
+        options.inTargetDensity = mTargetDensity;
         options.inScaled = true;
         options.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(path, options);
+        BitmapFactory.decodeFile(pathToImage, options);
+
         options.inJustDecodeBounds = false;
-        options.inSampleSize = BitmapUtils.calculateInSampleSize(options, mTargetWidth);
-        Bitmap thumbnail = BitmapFactory.decodeFile(path, options);
-        if (!Thread.currentThread().isInterrupted()) {
-            try {
-                mCallback.bitmapLoaded(mImageName, thumbnail);
-            } catch (RemoteException aE) {
-                aE.printStackTrace();
+        options.inSampleSize = BitmapUtils.calculateInSampleSize(options, mTargetImageWidth);
+
+        if (mTaskManager.isTaskStillNeeded(mHolderID, pathToImage)) {
+
+            Bitmap thumbnail = BitmapFactory.decodeFile(pathToImage, options);
+
+            if (!Thread.currentThread().isInterrupted() && mTaskManager.isTaskStillNeeded(mHolderID, pathToImage)) {
+                try {
+                    mCallback.bitmapLoaded(mImageName, thumbnail);
+                } catch (RemoteException aE) {
+                    aE.printStackTrace();
+                }
             }
         }
+    }
+
+    @Override
+    public String getTaskPathToImage() {
+        return ImageTaskService.PATH_TO_IMAGES + mImageName;
     }
 }

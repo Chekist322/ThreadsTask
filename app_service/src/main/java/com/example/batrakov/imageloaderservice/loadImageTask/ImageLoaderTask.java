@@ -18,18 +18,18 @@ public class ImageLoaderTask extends Task {
     /**
      * Constructor.
      *
-     * @param aImageName       path to image from external storage.
-     * @param aCallbackMessage callback to parent.
+     * @param aImageName path to image from external storage.
+     * @param aCallback  callback to parent.
      */
-    public ImageLoaderTask(String aImageName, IServiceCallback aCallbackMessage) {
-        mCallback = aCallbackMessage;
+    public ImageLoaderTask(String aImageName, IServiceCallback aCallback) {
+        mCallback = aCallback;
         mImageName = aImageName;
     }
 
     @Override
     public void process() {
-        String path = ImageTaskService.PATH_TO_IMAGES + mImageName;
-        Bitmap bitmap = BitmapFactory.decodeFile(path);
+        String pathToImage = ImageTaskService.PATH_TO_IMAGES + mImageName;
+        Bitmap bitmap = BitmapFactory.decodeFile(pathToImage);
         if (!Thread.currentThread().isInterrupted()) {
             try {
                 mCallback.bitmapLoaded(mImageName, bitmap);

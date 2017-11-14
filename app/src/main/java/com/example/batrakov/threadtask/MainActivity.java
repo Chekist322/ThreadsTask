@@ -46,7 +46,6 @@ public class MainActivity extends AppCompatActivity {
     public static final String IMAGE = "image";
     private static final String FILES_NAME_LIST = "file name list";
     private static final String TAG = MainActivity.class.getSimpleName();
-    private static final int LANDSCAPE_COL_SPAN = 3;
 
     private int mTargetThumbnailWidth;
     private int mTargetScreenDensity;
@@ -69,7 +68,8 @@ public class MainActivity extends AppCompatActivity {
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
             recyclerView.setLayoutManager(new LinearLayoutManager(getBaseContext()));
         } else {
-            recyclerView.setLayoutManager(new GridLayoutManager(getBaseContext(), LANDSCAPE_COL_SPAN));
+            int landscapeColSpan = getResources().getDisplayMetrics().widthPixels / mTargetThumbnailWidth;
+            recyclerView.setLayoutManager(new GridLayoutManager(getBaseContext(), landscapeColSpan));
         }
 
         mAdapter = new ListAdapter(mFilesNameList);
@@ -165,14 +165,17 @@ public class MainActivity extends AppCompatActivity {
         private String mCurrentImageName;
         private Handler mHandler;
         private IServiceCallback.Stub mAidlCallback;
+        private final int mID;
 
         /**
          * Constructor.
          *
-         * @param aItemView item view
+         * @param aItemView item view.
+         * @param aID holder ID.
          */
-        private ListHolder(View aItemView) {
+        private ListHolder(View aItemView, int aID) {
             super(aItemView);
+            mID = aID;
             mImage = aItemView.findViewById(R.id.image);
             if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
                 mDescription = aItemView.findViewById(R.id.image_description);
@@ -223,7 +226,7 @@ public class MainActivity extends AppCompatActivity {
 
             if (mServiceBound) {
                 try {
-                    mTaskServiceRequestInterface.addThumbnailTask(mCurrentImageName,
+                    mTaskServiceRequestInterface.addThumbnailTask(mID, mCurrentImageName,
                             mAidlCallback, mTargetScreenDensity, mTargetThumbnailWidth);
                 } catch (RemoteException aE) {
                     aE.printStackTrace();
@@ -257,6 +260,8 @@ public class MainActivity extends AppCompatActivity {
 
         private ArrayList<String> mNameList;
 
+        private int mHolderID = 0;
+
         /**
          * Constructor.
          *
@@ -279,7 +284,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public ListHolder onCreateViewHolder(ViewGroup aParent, int aViewType) {
             View rowView = LayoutInflater.from(aParent.getContext()).inflate(R.layout.list_item, aParent, false);
-            return new ListHolder(rowView);
+            return new ListHolder(rowView, mHolderID++);
         }
 
         @Override

@@ -10,4 +10,13 @@ public abstract class Task {
      */
     public void process() {
     }
+
+    /**
+     * Get path to image that need to be loaded in task.
+     *
+     * @return path to image.
+     */
+    public String getTaskPathToImage() {
+        return "not specified";
+    }
 }
